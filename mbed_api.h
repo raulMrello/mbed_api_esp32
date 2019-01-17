@@ -1,0 +1,298 @@
+/*
+ * mbed-os.h
+ *
+ *  Created on: Dic 2017
+ *      Author: raulMrello
+ *
+ *	mbed-os incluye diversas definiciones generales para realizar un porting de la API de MBED-OS v5.x a otras plataformas,
+ *	en este caso a FREERTOS + ESP32.
+ *
+ */
+#ifndef MBED_API_H
+#define MBED_API_H
+
+
+//------------------------------------------------------------------------------------
+//--- LIBRERÍAS ESTÁNDAR -------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+#include <math.h>
+#include <time.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+
+
+//------------------------------------------------------------------------------------
+//--- LIBRERÍAS ESP32 ESP-IDF SDK ----------------------------------------------------
+//------------------------------------------------------------------------------------
+
+/// ESP32 dependencies
+#include <sys/cdefs.h>
+#include <sdkconfig.h>
+#include <esp_system.h>
+#include <esp_wifi.h>
+#include <esp_wifi_types.h>
+#include <tcpip_adapter.h>
+#include <esp_event_loop.h>
+#include "esp_spi_flash.h"
+#include <esp_types.h>
+#include <esp_log.h>
+#include <soc/timer_group_struct.h>
+#include <driver/periph_ctrl.h>
+#include <driver/timer.h>
+#include <driver/gpio.h>
+#include <driver/adc.h>
+#include <driver/dac.h>
+#include <driver/i2c.h>
+#include <driver/spi_master.h>
+#include <driver/uart.h>
+#include <driver/mcpwm.h>
+#include <soc/mcpwm_reg.h>
+#include <soc/mcpwm_struct.h>
+#include <nvs_flash.h>
+#include <nvs.h>
+
+
+
+//------------------------------------------------------------------------------------
+//--- LIBRERÍAS FREERTOS -------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/FreeRTOSConfig.h"
+#include "freertos/portmacro.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+#include "freertos/queue.h"
+#include "freertos/timers.h"
+#include "freertos/event_groups.h"
+#include "freertos/ringbuf.h"
+
+
+
+//------------------------------------------------------------------------------------
+//--- DEPENDENCIAS MBED-OS -----------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+/// Status code values returned by CMSIS-RTOS functions.
+typedef enum {
+  osOK                      =  0,         ///< Operation completed successfully.
+  osError                   = -1,         ///< Unspecified RTOS error: run-time error but no other error message fits.
+  osErrorTimeout            = -2,         ///< Operation not completed within the timeout period.
+  osErrorResource           = -3,         ///< Resource not available.
+  osErrorParameter          = -4,         ///< Parameter error.
+  osErrorNoMemory           = -5,         ///< System is out of memory: it was impossible to allocate or reserve memory for the operation.
+  osErrorISR                = -6,         ///< Not allowed in ISR context: the function cannot be called from interrupt service routines.
+  osStatusReserved          = 0x7FFFFFFF  ///< Prevents enum down-size compiler optimization.
+} osStatus_t;
+
+/// Tipos de configuración de los pines gpio
+typedef enum {
+    PullNone          = 0,
+    PullUp            = 1,
+    PullDown          = 2,
+    OpenDrainPullUp   = 3,
+    OpenDrainNoPull   = 4,
+    OpenDrainPullDown = 5,
+    PushPullNoPull    = PullNone,
+    PushPullPullUp    = PullUp,
+    PushPullPullDown  = PullDown,
+    OpenDrain         = OpenDrainPullUp,
+    PullDefault       = PullNone
+} PinMode;
+
+/** GPIO IRQ events
+ */
+typedef enum {
+    IRQ_NONE,
+    IRQ_RISE,
+    IRQ_FALL
+} gpio_irq_event;
+
+/// mbed typedefs
+typedef gpio_num_t				PinName;
+#define NC						(PinName)0xFFFFFFFF
+typedef int32_t                 osStatus;
+#define osEventSignal           (0x08)
+#define osEventMessage          (0x10)
+#define osEventMail             (0x20)
+#define osEventTimeout          (0x40)
+#define osOK					(0)
+#define osErrorOS               (-1)
+#define osErrorTimeoutResource  (-2)
+#define osErrorISRRecursive     (-126)
+#define osErrorValue            (-127)
+#define osErrorPriority         (-128)
+
+#define osDelay					Thread::wait
+
+typedef void* osMailQId;
+typedef void* osMessageQId;
+
+/// Event structure contains detailed information about an event.
+typedef struct {
+	osStatus          status;   	///< status code: event or error information
+	union {
+		uint32_t      v;   			///< message as 32-bit value
+		void          *p;   		///< message or mail as void pointer
+		int32_t       signals;  	///< signal flags
+	} value;                    	///< event value
+	union {
+		osMailQId     mail_id;  	///< mail id obtained by \ref osMailCreate
+		osMessageQId  message_id;	///< message id obtained by \ref osMessageCreate
+	} def;                          ///< event definition
+} osEvent;
+
+
+
+//------------------------------------------------------------------------------------
+//--- ADAPTACIÓN MBED-OS -> FREERTOS -------------------------------------------------
+//------------------------------------------------------------------------------------
+
+
+typedef TaskHandle_t osThreadId;			/// Conversión threadId de mbed-os a freertos
+typedef UBaseType_t	osPriority;				/// Conversión de priority de mbed-os a freertos
+typedef TimerHandle_t osTimerId;			/// Conversión timerId de mbed-os a freertos
+typedef UBaseType_t os_timer_type;			/// Conversión timer_type de mbed-os a freertos
+typedef EventGroupHandle_t osEventFlagsId;	/// Conversión eventflagid de mbed-os a freertos
+typedef SemaphoreHandle_t osSemaphoreId;	/// Conversión semaphoreid de mbed-os a freertos
+
+#define osFlagsError				0x80000000U
+#define OS_STACK_SIZE				2048
+#define osWaitForever				portMAX_DELAY
+#define osThreadGetId()				xTaskGetCurrentTaskHandle()
+#define osSignalSet(tid,ev)			xTaskNotify(tid, ev, eSetBits)
+#define osPriorityIdle				0
+#define osPriorityCritical			(configMAX_PRIORITIES - 1)
+#define osPriorityNormal			(configMAX_PRIORITIES / 2)
+#define osPriorityAboveNormal(x)	(osPriorityNormal + (x))
+#define osPriorityBelowNormal(x)	(osPriorityNormal - (x))
+#define osTimerPeriodic				pdTRUE
+#define osTimerOnce					pdFALSE
+
+#define MBED_MILLIS_TO_TICK(t)		(((t) == osWaitForever)? portMAX_DELAY : pdMS_TO_TICKS(t))
+
+
+/// ISR nesting global control
+bool IS_ISR();
+void ENTER_ISR();
+void EXIT_ISR();
+int GET_ISR_NESTING();
+
+/// wait common functions
+void wait(float s);
+void wait_ms(int ms);
+void wait_us(int us);
+#define HAL_GetTick()		Ticker_HAL::getTimestamp()
+
+
+//------------------------------------------------------------------------------------
+//--- LIBRERÍAS MBED-OS  -------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+#include "Callback.h"		/// Cabecera para la implementación de callbacks
+
+
+//------------------------------------------------------------------------------------
+//--- UTILIDADES DE DEPURACIÓN/LOGGING -----------------------------------------------
+//------------------------------------------------------------------------------------
+
+#define DEBUG_SET_LEVEL(level)	esp_log_level_set("*", level);        // set all components to level
+
+/** Macro para imprimir trazas de depuración via Syslog. Requiere definir 'mbed_syslog' */
+extern void (*syslog_print)(const char* level, const char* tag, const char* format, ...);
+
+/** Macro para trazas ERROR */
+#define DEBUG_TRACE_E(expr, tag, format, ...)			\
+if(expr){												\
+	ESP_LOGE(tag, format, ##__VA_ARGS__);				\
+	if(syslog_print){									\
+		syslog_print("E", tag, format, ##__VA_ARGS__);	\
+	}													\
+}
+
+/** Macro para trazas WARNING */
+#define DEBUG_TRACE_W(expr, tag, format, ...)			\
+if(expr){												\
+	ESP_LOGW(tag, format, ##__VA_ARGS__);				\
+	if(syslog_print){									\
+		syslog_print("W", tag, format, ##__VA_ARGS__);	\
+	}													\
+}
+
+/** Macro para trazas INFO */
+#define DEBUG_TRACE_I(expr, tag, format, ...)			\
+if(expr){												\
+	ESP_LOGI(tag, format, ##__VA_ARGS__);				\
+	if(syslog_print){									\
+		syslog_print("I", tag, format, ##__VA_ARGS__);	\
+	}													\
+}
+
+/** Macro para trazas DEBUG */
+#define DEBUG_TRACE_D(expr, tag, format, ...)			\
+if(expr){												\
+	ESP_LOGD(tag, format, ##__VA_ARGS__);				\
+	if(syslog_print){									\
+		syslog_print("D", tag, format, ##__VA_ARGS__);	\
+	}													\
+}
+/** Macro para trazas VERBOSE */
+#define DEBUG_TRACE_V(expr, tag, format, ...)			\
+if(expr){												\
+	ESP_LOGV(tag, format, ##__VA_ARGS__);				\
+	if(syslog_print){									\
+		syslog_print("V", tag, format, ##__VA_ARGS__);	\
+	}													\
+}
+
+/** Macro para trazas locales ERROR */
+#define DEBUG_LOCAL_TRACE_E(expr, tag, format, ...)		\
+if(expr){												\
+	ESP_LOGE(tag, format, ##__VA_ARGS__);				\
+}
+
+/** Macro para trazas locales WARNING */
+#define DEBUG_LOCAL_TRACE_W(expr, tag, format, ...)		\
+if(expr){												\
+	ESP_LOGW(tag, format, ##__VA_ARGS__);				\
+}
+
+
+/** Macro para trazas locales INFO */
+#define DEBUG_LOCAL_TRACE_I(expr, tag, format, ...)		\
+if(expr){												\
+	ESP_LOGI(tag, format, ##__VA_ARGS__);				\
+}
+
+
+/** Macro para trazas locales DEBUG */
+#define DEBUG_LOCAL_TRACE_D(expr, tag, format, ...)		\
+if(expr){												\
+	ESP_LOGD(tag, format, ##__VA_ARGS__);				\
+}
+
+/** Macro para trazas locales VERBOSE */
+#define DEBUG_LOCAL_TRACE_V(expr, tag, format, ...)		\
+if(expr){												\
+	ESP_LOGV(tag, format, ##__VA_ARGS__);				\
+}
+
+
+//------------------------------------------------------------------------------------
+//--- UTILIDADES DE PROPÓSITO GENERAL ------------------------------------------------
+//------------------------------------------------------------------------------------
+
+
+/** Utilidad para conocer el tamaño en número de elementos de cualquier tipo de array */
+template <typename T, size_t N> inline size_t SizeOfArray(const T(&)[N]) { return N; }
+
+
+using namespace std;
+
+#endif
