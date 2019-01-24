@@ -1,1 +1,2 @@
 COMPONENT_ADD_INCLUDEDIRS := ./
+CPPFLAGS := -fpermissive
