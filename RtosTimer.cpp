@@ -43,8 +43,23 @@ RtosTimer::RtosTimer(Callback<void()> func, os_timer_type type, const char* name
 
 //------------------------------------------------------------------------------------
 osStatus RtosTimer::start(uint32_t millisec) {
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando RtosTimer <%s>...", _name);
-	if((_id = xTimerCreate(_name, MBED_MILLIS_TO_TICK(millisec), _type, (void*)&_function, vCallbackFunction)) != 0){
+	if(_id==0){
+		DEBUG_TRACE_D(_EXPR_, _MODULE_, "Creando xTimerCreate para RtosTimer <%s>", _name);
+		if((_id = xTimerCreate(_name, MBED_MILLIS_TO_TICK(millisec), _type, (void*)&_function, vCallbackFunction)) == 0){
+			DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR xTimerCreate en RtosTimer <%s>", _name);
+			return osError;
+		}
+	}
+	// primero lo detiene (si estuviera activado)
+	stop();
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando RtosTimer <%s>", _name);
+	// lo inicia
+	if(IS_ISR()){
+		if(xTimerStartFromISR(_id, NULL) == pdPASS){
+			return osOK;
+		}
+	}
+	else{
 		if(xTimerStart(_id, 0) == pdPASS){
 			return osOK;
 		}
