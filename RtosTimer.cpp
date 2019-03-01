@@ -56,6 +56,9 @@ osStatus RtosTimer::start(uint32_t millisec) {
 
 //------------------------------------------------------------------------------------
 osStatus RtosTimer::stop(void) {
+	if(xTimerIsTimerActive(_id) == pdFALSE){
+		return osOK;
+	}
 	if(IS_ISR()){
 		if(xTimerStopFromISR(_id, NULL) == pdPASS){
 			return osOK;
@@ -66,6 +69,7 @@ osStatus RtosTimer::stop(void) {
 	if(xTimerStop(_id, 0) == pdPASS){
 		return osOK;
 	}
+
 	return osError;
 }
 
