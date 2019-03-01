@@ -49,18 +49,28 @@ osStatus RtosTimer::start(uint32_t millisec) {
 			DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR xTimerCreate en RtosTimer <%s>", _name);
 			return osError;
 		}
+		if(IS_ISR()){
+			if(xTimerStartFromISR(_id, NULL) == pdPASS){
+				return osOK;
+			}
+		}
+		else{
+			if(xTimerStart(_id, 0) == pdPASS){
+				return osOK;
+			}
+		}
+		DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR al iniciar RtosTimer <%s>", _name);
+		return osError;
 	}
-	// primero lo detiene (si estuviera activado)
-	stop();
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando RtosTimer <%s>", _name);
-	// lo inicia
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Reiniciando RtosTimer <%s>", _name);
+	// lo reinicia cambiando el periodo
 	if(IS_ISR()){
-		if(xTimerStartFromISR(_id, NULL) == pdPASS){
+		if(xTimerChangePeriodFromISR(_id, MBED_MILLIS_TO_TICK(millisec), NULL) == pdPASS){
 			return osOK;
 		}
 	}
 	else{
-		if(xTimerStart(_id, 0) == pdPASS){
+		if(xTimerChangePeriod(_id, MBED_MILLIS_TO_TICK(millisec), 0) == pdPASS){
 			return osOK;
 		}
 	}
