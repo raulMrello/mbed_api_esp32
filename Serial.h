@@ -53,6 +53,14 @@ public:
 	 */
     virtual ~Serial();
 
+
+    /**
+     * Chequea si el componente está habilitado y listo para su ejecución
+     * @return Estado del componente
+     */
+    bool ready(){ return _ready;  }
+
+
     /** Set the baud rate of the serial port
      *
      *  @param baudrate The baudrate of the serial port (default = 9600).
@@ -181,11 +189,10 @@ protected:
     void task();
 
 
-protected:
-
     /** Máximo número acumulado de eventos en la tarea asociada a la UART */
     static const uint32_t DefaultQueueDepth = 16;
 
+    bool _ready;
     bool _debug;
     char _eof;
     bool _en_rx;

@@ -44,6 +44,7 @@ Serial::Serial(	PinName tx, PinName rx, int bufsize, int baud, char eof,
 				uart_word_length_t bits, uart_parity_t parity, uart_stop_bits_t stop_bits) :
 					_debug(debugmode), _eof(eof), _en_rx(false), _tx_bufsize(bufsize), _rx_bufsize(bufsize)	{
 
+	_ready = false;
 	if(uart_num >= UART_NUM_MAX){
 		return;
 	}
@@ -227,6 +228,7 @@ void Serial::stopReceiver(){
 void Serial::task() {
 	uart_event_t event;
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando tarea y cola de mensajes...");
+	_ready = true;
 	for(;;){
 		if (xQueueReceive(_queue, (void * )&event, (portTickType)osWaitForever)){
 			uart_event_t*  evt = &event;
