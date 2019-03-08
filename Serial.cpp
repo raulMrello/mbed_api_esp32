@@ -233,6 +233,7 @@ void Serial::task() {
 		if (xQueueReceive(_queue, (void * )&event, (portTickType)osWaitForever)){
 			uart_event_t*  evt = &event;
 			MBED_ASSERT(evt);
+			_curr_event = evt->type;
 			switch (evt->type) {
 				case UART_DATA_BREAK: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_data_break!");
