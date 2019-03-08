@@ -175,6 +175,10 @@ public:
     }
 
 
+    uart_event_type_t getCurrentEvent(){
+    	return _curr_event;
+    }
+
     /** setDebugMode()
      *  Habilita o Deshabilita el modo de depuración
      *  @param endis True Habilita el modo depuración, False cancela el modo depuración
@@ -203,6 +207,7 @@ protected:
     uart_port_t _uart_num;
     Thread _th;
     QueueHandle_t _queue;
+    uart_event_type_t _curr_event;
 //    Queue<uart_event_t, DefaultQueueDepth> _queue{false};
     Mutex _mutex;
     Callback<void()> _cb_rx;
