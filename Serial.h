@@ -205,7 +205,7 @@ protected:
     uint32_t _rx_timeout;
     uart_config_t _uart_config;
     uart_port_t _uart_num;
-    Thread _th;
+    Thread _th{osPriorityNormal, 3072, NULL, "Serial"};
     QueueHandle_t _queue;
     uart_event_type_t _curr_event;
 //    Queue<uart_event_t, DefaultQueueDepth> _queue{false};
