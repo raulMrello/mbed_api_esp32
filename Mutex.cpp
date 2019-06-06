@@ -43,18 +43,29 @@ Mutex::Mutex(const char *name) : _name(name) {
 //------------------------------------------------------------------------------------
 osStatus Mutex::lock(uint32_t millisec) {
 	if(IS_ISR()){
-		millisec = 0;
+		if(xSemaphoreTakeFromISR(_id, NULL) == pdTRUE){
+			return osOK;
+		}
+		return osErrorOS;
 	}
-	if(xSemaphoreTake(_id, MBED_MILLIS_TO_TICK(millisec)) == pdTRUE)
+	if(xSemaphoreTake(_id, MBED_MILLIS_TO_TICK(millisec)) == pdTRUE){
 		return osOK;
+	}
 	return osErrorTimeoutResource;
 }
 
 
 //------------------------------------------------------------------------------------
 osStatus Mutex::unlock() {
-	if(xSemaphoreGive(_id) == pdTRUE)
+	if(IS_ISR()){
+		if(xSemaphoreGiveFromISR(_id, NULL) == pdTRUE){
+			return osOK;
+		}
+		return osErrorOS;
+	}
+	if(xSemaphoreGive(_id) == pdTRUE){
 		return osOK;
+	}
 	return osErrorOS;
 }
 

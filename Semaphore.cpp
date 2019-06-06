@@ -24,6 +24,12 @@ Semaphore::Semaphore(int32_t count, uint16_t max_count) {
 
 //------------------------------------------------------------------------------------
 int32_t Semaphore::wait(uint32_t millisec) {
+	if(IS_ISR()){
+		if(xSemaphoreTakeFromISR(_id, NULL) == pdTRUE){
+			return uxSemaphoreGetCount(_id) + 1;
+		}
+		return 0;
+	}
 	if(xSemaphoreTake(_id, MBED_MILLIS_TO_TICK(millisec)) == pdTRUE){
 		return uxSemaphoreGetCount(_id) + 1;
 	}
@@ -33,6 +39,12 @@ int32_t Semaphore::wait(uint32_t millisec) {
 
 //------------------------------------------------------------------------------------
 osStatus Semaphore::release(void) {
+	if(IS_ISR()){
+		if(xSemaphoreGiveFromISR(_id, NULL) == pdTRUE){
+			return osOK;
+		}
+		return osError;
+	}
 	if(xSemaphoreGive(_id) != pdTRUE){
 		return osError;
 	}
