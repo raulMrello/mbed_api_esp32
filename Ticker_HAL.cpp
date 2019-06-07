@@ -27,7 +27,7 @@ static const Ticker_HAL::TickerData_t no_more_tickdata={0, NULL, 0, 0};
 
 
 //------------------------------------------------------------------------------------
-void IRAM_ATTR tickerAlarmISR(void *para){
+void tickerAlarmISR(void *para){
 	ENTER_ISR();
 	timer_idx_t timerIdx = (timer_idx_t)(int)para;
 	if(timerIdx == Ticker_HAL::TimerIdx){
@@ -78,7 +78,7 @@ void Ticker_HAL::start(){
 		err = timer_enable_intr(TimerGroup, TimerIdx);
 		// Registra manejador de interrupción
 		MBED_ASSERT(err == ESP_OK);
-		err = timer_isr_register(TimerGroup, TimerIdx, tickerAlarmISR, (void*)TimerIdx, ESP_INTR_FLAG_IRAM, NULL);
+		err = timer_isr_register(TimerGroup, TimerIdx, tickerAlarmISR, (void*)TimerIdx, 0, NULL);
 		// Arranca el timer
 		err = timer_start(TimerGroup, TimerIdx);
 		MBED_ASSERT(err == ESP_OK);
@@ -89,7 +89,7 @@ void Ticker_HAL::start(){
 }
 
 //------------------------------------------------------------------------------------
-void IRAM_ATTR Ticker_HAL::tickerISR(){
+void Ticker_HAL::tickerISR(){
 
 	/* Obtiene el estado de la alarma y el valor del contador */
 	uint32_t intr_status;
