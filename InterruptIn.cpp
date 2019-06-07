@@ -39,7 +39,7 @@ static bool g_isr_svc_installed = false;
 
 
 //------------------------------------------------------------------------------------
-static void IRAM_ATTR gpio_isr_handler(void* arg){
+static void gpio_isr_handler(void* arg){
 	InterruptIn* me = (InterruptIn*)arg;
 	ENTER_ISR();
 	if(me->read()){
