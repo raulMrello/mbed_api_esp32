@@ -33,9 +33,9 @@
 #define MBED_ASSERT(expr)                                	\
 do {                                                     	\
     if (!(expr)) {                                       	\
+        mbed_assert_internalFX(#expr, __FILE__, __LINE__, __ASSERT_FUNC);\
         while(1){										 	\
-        	mbed_assert_internalFX(#expr, __FILE__, __LINE__, __ASSERT_FUNC);\
-        	for(int i=0;i<10000000;i++){}			 		\
+        	wait_us(1000000);								\
 		}												 	\
     }                                                    	\
 } while (0)
