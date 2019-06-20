@@ -30,13 +30,13 @@
 #define MBED_ASSERT(expr) ((void)0)
 
 #else
+#include "esp_system.h"
 #define MBED_ASSERT(expr)                                	\
 do {                                                     	\
     if (!(expr)) {                                       	\
         mbed_assert_internalFX(#expr, __FILE__, __LINE__, __ASSERT_FUNC);\
-        while(1){										 	\
-        	wait_us(1000000);								\
-		}												 	\
+        wait_us(1000000);									\
+		esp_restart();									 	\
     }                                                    	\
 } while (0)
 #define MBED_ERROR_CHECK(x) do {                                         				\
