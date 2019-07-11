@@ -105,8 +105,8 @@ public:
      *  @param timeout_us Tiempo a esperar en millis hasta que haya datos en el buffer de recepción
      *  @return Número de bytes copiados
      */
-    uint16_t read(void* buf, uint16_t maxsize, int32_t timeout_ms = 0){
-    	return recv(buf, maxsize, timeout_ms);
+    uint16_t gets(void* buf, uint16_t maxsize){
+    	return recv(buf, maxsize);
     }
     uint16_t recv(void* buf, uint16_t maxsize, int32_t timeout_ms = 0);
 
