@@ -98,13 +98,16 @@ public:
     int printff(const char *format, ...);
 
 
-    /** recv()
+    /** recv()/read()
      *  Lee el contenido del buffer de recepción hasta un máximo de maxsize bytes
      *  @param buf Buffer de destino en el que copiar la trama recibida
      *  @param maxsize Tamaño del buffer de destino
      *  @param timeout_us Tiempo a esperar en millis hasta que haya datos en el buffer de recepción
      *  @return Número de bytes copiados
      */
+    uint16_t read(void* buf, uint16_t maxsize, int32_t timeout_ms = 0){
+    	return recv(buf, maxsize, timeout_ms);
+    }
     uint16_t recv(void* buf, uint16_t maxsize, int32_t timeout_ms = 0);
 
 
