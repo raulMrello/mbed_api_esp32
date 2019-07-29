@@ -22,6 +22,7 @@
 #include "DigitalOut.h"
 #include "InterruptIn.h"
 #include "AnalogIn.h"
+#include "AnalogOut.h"
 #include "I2C.h"
 #include "Serial.h"
 #include "SPI.h"
