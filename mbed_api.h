@@ -178,6 +178,13 @@ typedef SemaphoreHandle_t osSemaphoreId;	/// Conversión semaphoreid de mbed-os a
 #define osPriorityIdle				0
 #define osPriorityCritical			(configMAX_PRIORITIES - 1)
 #define osPriorityNormal			(configMAX_PRIORITIES / 2)
+#define osPriorityAboveNormal1  	osPriorityNormal+1       ///< Priority: above normal + 1
+#define osPriorityAboveNormal2  	osPriorityNormal+2       ///< Priority: above normal + 2
+#define osPriorityAboveNormal3  	osPriorityNormal+3       ///< Priority: above normal + 3
+#define osPriorityAboveNormal4  	osPriorityNormal+4       ///< Priority: above normal + 4
+#define osPriorityAboveNormal5  	osPriorityNormal+5       ///< Priority: above normal + 5
+#define osPriorityAboveNormal6  	osPriorityNormal+6       ///< Priority: above normal + 6
+#define osPriorityAboveNormal7  	osPriorityNormal+7       ///< Priority: above normal + 7
 #define osPriorityAboveNormal(x)	(osPriorityNormal + (x))
 #define osPriorityBelowNormal(x)	(osPriorityNormal - (x))
 #define osTimerPeriodic				pdTRUE
