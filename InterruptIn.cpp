@@ -151,7 +151,7 @@ void InterruptIn::mode(PinMode pull) {
 
 //------------------------------------------------------------------------------------
 void InterruptIn::rise(Callback<void()> func) {
-	if(func != (Callback<void()>)NULL){
+	if(func){
 		_rise = func;
 		_gpio.intr_type = (gpio_int_type_t)(_gpio.intr_type | GPIO_INTR_POSEDGE);
 		DEBUG_TRACE_D(_EXPR_, _MODULE_, "Activando isr-rise intr_type = %d", _gpio.intr_type);
@@ -173,7 +173,7 @@ void InterruptIn::rise(Callback<void()> func) {
 
 //------------------------------------------------------------------------------------
 void InterruptIn::fall(Callback<void()> func) {
-	if(func != (Callback<void()>)NULL){
+	if(func){
 		_fall = func;
 		_gpio.intr_type = (gpio_int_type_t)(_gpio.intr_type | GPIO_INTR_NEGEDGE);
 		DEBUG_TRACE_D(_EXPR_, _MODULE_, "Activando isr-fall intr_type = %d", _gpio.intr_type);
