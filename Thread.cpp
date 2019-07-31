@@ -89,7 +89,7 @@ int32_t Thread::signal_set(int32_t flags) {
 
 //------------------------------------------------------------------------------------
 Thread::State Thread::get_state() {
-	State user_state = Inactive;
+	State user_state = Deleted;
 	if(!_tid){
 		return user_state;
 	}
