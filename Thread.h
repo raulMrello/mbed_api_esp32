@@ -126,6 +126,16 @@ public:
     */
     void setName(const char* name){ _name = name; }
 
+    /** Wait for thread to terminate
+      @return  status code that indicates the execution status of the function.
+
+      @note You cannot call this function from ISR context.
+    */
+    osStatus join(){
+    	return terminate();
+    }
+
+
 protected:
 
     Callback<void()>  	_task;			/// Función a ejecutar para iniciar la tarea
