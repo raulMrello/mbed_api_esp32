@@ -52,6 +52,7 @@
 #include <driver/spi_master.h>
 #include <driver/uart.h>
 #include <driver/mcpwm.h>
+#include <driver/rmt.h>
 #include <soc/mcpwm_reg.h>
 #include <soc/mcpwm_struct.h>
 #include <nvs_flash.h>
@@ -171,6 +172,7 @@ typedef EventGroupHandle_t osEventFlagsId;	/// Conversión eventflagid de mbed-os
 typedef SemaphoreHandle_t osSemaphoreId;	/// Conversión semaphoreid de mbed-os a freertos
 
 #define osFlagsError				0x80000000U
+#define osFlagsWaitAny				0x00000000U
 #define OS_STACK_SIZE				2048
 #define osWaitForever				portMAX_DELAY
 #define osThreadGetId()				xTaskGetCurrentTaskHandle()
