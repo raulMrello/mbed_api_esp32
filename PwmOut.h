@@ -9,7 +9,7 @@
  *		El chip ESP32 dispone dos unidades MCPWM cada una con 3 timers y 2 salidas PWM cada uno
  */
 
-#ifndef _PWMOUT_H
+#ifndef PWMOUT_H
 #define PWMOUT_H
 
 #include "mbed_api.h"
