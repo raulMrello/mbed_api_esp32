@@ -25,6 +25,7 @@
 #include "AnalogOut.h"
 #include "I2C.h"
 #include "Serial.h"
+#include "RawSerial.h"
 #include "SPI.h"
 #include "PwmOut.h"
 
