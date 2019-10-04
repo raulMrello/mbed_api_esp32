@@ -1,10 +1,10 @@
 /*
- * SerialBase.h
+ * Serial.h
  *
  *  Created on: Ene 2018
  *      Author: raulMrello
  *
- *	Portabilidad del driver SerialBase + RawSerial en un nuevo módulo denominado Serial compatible con ESP-IDF y la
+ *	Portabilidad del driver RawSerial en un nuevo módulo denominado Serial compatible con ESP-IDF y la
  *	funcionalidad UART_EVENTS
  *	NOTAS:
  *		El chip ESP32 dispone de 3 canales UART (UART0, UART1, UART2)
