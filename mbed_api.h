@@ -166,6 +166,7 @@ typedef struct {
 
 typedef TaskHandle_t osThreadId;			/// Conversión threadId de mbed-os a freertos
 typedef UBaseType_t	osPriority;				/// Conversión de priority de mbed-os a freertos
+typedef osPriority osPriority_t;
 typedef TimerHandle_t osTimerId;			/// Conversión timerId de mbed-os a freertos
 typedef UBaseType_t os_timer_type;			/// Conversión timer_type de mbed-os a freertos
 typedef EventGroupHandle_t osEventFlagsId;	/// Conversión eventflagid de mbed-os a freertos
