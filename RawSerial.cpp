@@ -40,6 +40,7 @@ RawSerial::RawSerial(PinName tx, PinName rx, int baud, uart_port_t uart_num, osP
 	_irq[TxIrq] 	= (Callback<void()>) NULL;
 	_irq[ErrIrq] 	= (Callback<void()>) NULL;
 	_uart_config.baud_rate = baud;
+
 	_th = new Thread(_priority, _stack_size, NULL, "RawSerial");
 	MBED_ASSERT(_th);
 	_installed = false;
@@ -139,8 +140,19 @@ int RawSerial::putChar(int c) {
 	if(!_started){
 		return -1;
 	}
-	int sent = uart_write_bytes(_uart_num, (const char*)c, 1);
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "%d bytes pushed into fifo", sent);
+	char cc = (char)c;
+	int sent = 0;
+	if((sent = uart_write_bytes(_uart_num, &cc, 1)) != -1){
+		DEBUG_TRACE_D(_EXPR_, _MODULE_, "OK!, pushed into fifo %d bytes", sent);
+	}
+	else{
+		DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR!");
+	}
+	// si ha sido un envío bloqueante por semáforo, lo libera
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Notificando trama enviada");
+	if(_irq[TxIrq]){
+		_irq[TxIrq].call();
+	}
 	return sent;
 }
 
@@ -150,8 +162,19 @@ int RawSerial::puts(const char *str) {
 	if(!_started){
 		return -1;
 	}
-	int sent = uart_write_bytes(_uart_num, str, strlen(str));
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "%d bytes pushed into fifo", sent);
+	int size = strlen(str);
+	int sent = 0;
+	if((sent = uart_write_bytes(_uart_num, str, size)) != -1){
+		DEBUG_TRACE_D(_EXPR_, _MODULE_, "OK!, pushed into fifo %d bytes", sent);
+	}
+	else{
+		DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR!");
+	}
+	// si ha sido un envío bloqueante por semáforo, lo libera
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Notificando trama enviada");
+	if(_irq[TxIrq]){
+		_irq[TxIrq].call();
+	}
 	return sent;
 }
 
@@ -188,15 +211,10 @@ int RawSerial::getChar(){
 	if(!_started){
 		return 0;
 	}
-	size_t size = 0;
-	uart_get_buffered_data_len(_uart_num, &size);
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "%d bytes get from uart", size);
-	if(size > 0){
-		uint8_t buf;
-		int bytes_read = uart_read_bytes(_uart_num, &buf, 1, MBED_MILLIS_TO_TICK(osWaitForever));
-		return (int)buf;
+	if(_rxcnt < _rxsz){
+		return _rxbuf[_rxcnt++];
 	}
-	return 0;
+	return -1;
 }
 
 
@@ -221,7 +239,7 @@ void RawSerial::_install(){
 
 	}
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Instalando uart");
-	if(uart_driver_install(_uart_num, 2*UART_FIFO_LEN, 2*UART_FIFO_LEN, DefaultQueueDepth, &_queue, 0) != ESP_OK){
+	if(uart_driver_install(_uart_num, DefaultBufferLength, DefaultBufferLength, DefaultQueueDepth, &_queue, 0) != ESP_OK){
 		DEBUG_TRACE_E(_EXPR_, _MODULE_, "Error al instalar uart");
 		return;
 	}
@@ -251,16 +269,32 @@ void RawSerial::_task() {
 				case UART_DATA_BREAK: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_data_break!");
 					/* Evento al finalizar un envío */
-					_irq[TxIrq].call();
+					if(_irq[TxIrq]){
+						_irq[TxIrq].call();
+					}
 					break;
 				}
 
 				case UART_DATA: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_data ");
-					size_t bytes = 0;
-					uart_get_buffered_data_len(_uart_num, &bytes);
-					DEBUG_TRACE_D(_EXPR_, _MODULE_, "%d bytes", bytes);
-					_irq[RxIrq].call();
+					size_t size = 0;
+					uart_get_buffered_data_len(_uart_num, &size);
+					DEBUG_TRACE_D(_EXPR_, _MODULE_, "%d bytes", size);
+					if(size > 0){
+						uint8_t* buffer = new uint8_t[size];
+						MBED_ASSERT(buffer);
+						size = uart_read_bytes(_uart_num, buffer, size, 0);
+						DEBUG_TRACE_D(_EXPR_, _MODULE_, "Read %d bytes", size);
+						_rxbuf = buffer;
+						_rxsz = size;
+						_rxcnt = 0;
+						if(_irq[RxIrq]){
+							_irq[RxIrq].call();
+						}
+						_rxbuf = NULL;
+						_rxsz = 0;
+						delete(buffer);
+					}
 					break;
 				}
 
@@ -270,7 +304,9 @@ void RawSerial::_task() {
 					// If fifo overflow happened, you should consider adding flow control for your application.
 					// We can read data out out the buffer, or directly flush the Rx buffer.
 					uart_flush(_uart_num);
-					_irq[ErrIrq].call();
+					if(_irq[ErrIrq]){
+						_irq[ErrIrq].call();
+					}
 					break;
 				}
 
@@ -280,7 +316,9 @@ void RawSerial::_task() {
 					// If buffer full happened, you should consider increasing your buffer size
 					// We can read data out out the buffer, or directly flush the Rx buffer.
 					uart_flush(_uart_num);
-					_irq[ErrIrq].call();
+					if(_irq[ErrIrq]){
+						_irq[ErrIrq].call();
+					}
 					break;
 				}
 
@@ -293,7 +331,9 @@ void RawSerial::_task() {
 				case UART_PARITY_ERR: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_parity_err!");
 					uart_flush(_uart_num);
-					_irq[ErrIrq].call();
+					if(_irq[ErrIrq]){
+						_irq[ErrIrq].call();
+					}
 					break;
 				}
 
@@ -301,7 +341,9 @@ void RawSerial::_task() {
 				case UART_FRAME_ERR: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_frame_err!");
 					uart_flush(_uart_num);
-					_irq[ErrIrq].call();
+					if(_irq[ErrIrq]){
+						_irq[ErrIrq].call();
+					}
 					break;
 				}
 

@@ -171,6 +171,8 @@ protected:
 
     /** Máximo número acumulado de eventos en la tarea asociada a la UART */
     static const uint32_t DefaultQueueDepth = 16;
+    /** Tamaño por defecto de la FIFO de recepción */
+    static const uint32_t DefaultBufferLength = 256;
 
     /** Callbacks */
     Callback<void()> _irq[IrqCnt];
@@ -182,6 +184,10 @@ protected:
     PinName _tx, _rx, _rts, _cts;
     bool _installed;
     bool _started;
+    uint8_t* _rxbuf;
+    size_t _rxsz;
+    size_t _rxcnt;
+
 
     /**
      * Instalación del driver
