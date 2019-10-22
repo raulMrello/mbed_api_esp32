@@ -83,6 +83,14 @@
 #include "freertos/ringbuf.h"
 
 
+//------------------------------------------------------------------------------------
+//--- MISC ---------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+/** Tipo definido para utilizar PinNames como uint32_t y evitar errores en la serialización cuando
+ *  sizeof(PinName) es diferente según el compilador y/o la plataforma */
+typedef uint32_t PinName32;
+
 
 //------------------------------------------------------------------------------------
 //--- DEPENDENCIAS MBED-OS -----------------------------------------------------------
