@@ -28,6 +28,6 @@
 #include "RawSerial.h"
 #include "SPI.h"
 #include "PwmOut.h"
-
+#include "Watchdog.h"
 
 #endif
