@@ -83,6 +83,14 @@
 #include "freertos/ringbuf.h"
 
 
+//------------------------------------------------------------------------------------
+//--- MISC ---------------------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+/** Tipo definido para utilizar PinNames como uint32_t y evitar errores en la serialización cuando
+ *  sizeof(PinName) es diferente según el compilador y/o la plataforma */
+typedef uint32_t PinName32;
+
 
 //------------------------------------------------------------------------------------
 //--- DEPENDENCIAS MBED-OS -----------------------------------------------------------
@@ -166,6 +174,7 @@ typedef struct {
 
 typedef TaskHandle_t osThreadId;			/// Conversión threadId de mbed-os a freertos
 typedef UBaseType_t	osPriority;				/// Conversión de priority de mbed-os a freertos
+typedef osPriority osPriority_t;
 typedef TimerHandle_t osTimerId;			/// Conversión timerId de mbed-os a freertos
 typedef UBaseType_t os_timer_type;			/// Conversión timer_type de mbed-os a freertos
 typedef EventGroupHandle_t osEventFlagsId;	/// Conversión eventflagid de mbed-os a freertos
