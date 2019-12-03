@@ -57,6 +57,7 @@
 #include <soc/mcpwm_struct.h>
 #include <nvs_flash.h>
 #include <nvs.h>
+#include "esp_task_wdt.h"
 
 //------------------------------------------------------------------------------------
 //--- LIBRERÍAS ESP32 ESP-MDF SDK ----------------------------------------------------

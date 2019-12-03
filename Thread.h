@@ -118,6 +118,15 @@ public:
     */
     static osThreadId gettid() {return xTaskGetCurrentTaskHandle(); }
 
+    /** Get thread id
+      @return  thread ID for reference by other functions.
+
+      @note You may call this function from ISR context.
+     */
+    osThreadId get_id() {
+    	return _tid;
+    }
+
 
     virtual ~Thread();
 
