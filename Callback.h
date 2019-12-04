@@ -35,7 +35,6 @@
 do {                                                     	\
     if (!(expr)) {                                       	\
         mbed_assert_internalFX(#expr, __FILE__, __LINE__, __ASSERT_FUNC);\
-        wait_us(1000000);									\
 		esp_restart();									 	\
     }                                                    	\
 } while (0)
