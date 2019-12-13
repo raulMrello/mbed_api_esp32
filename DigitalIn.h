@@ -27,8 +27,7 @@ public:
      *
      *  @param pin DigitalIn pin to connect to
      */
-    DigitalIn(PinName pin) : gpio()
-    {
+    DigitalIn(PinName pin){
      }
 
     /** Create a DigitalIn connected to the specified pin
@@ -36,8 +35,7 @@ public:
      *  @param pin DigitalIn pin to connect to
      *  @param mode the initial mode of the pin
      */
-    DigitalIn(PinName pin, PinMode mode) : gpio()
-    {
+    DigitalIn(PinName pin, PinMode mode) {
     }
     /** Read the input, represented as 0 or 1 (int)
      *
