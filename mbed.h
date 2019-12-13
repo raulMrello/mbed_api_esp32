@@ -19,6 +19,7 @@
 #include "List.h"
 #include "Heap.h"
 
+#include "DigitalIn.h"
 #include "DigitalOut.h"
 #include "InterruptIn.h"
 #include "AnalogIn.h"
