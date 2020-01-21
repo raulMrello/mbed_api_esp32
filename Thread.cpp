@@ -61,8 +61,7 @@ osStatus Thread::terminate() {
 	}
     _mutex.lock();
     vTaskDelete(_tid);
-    Thread::wait(1);
-
+    _tid = 0;
     _mutex.unlock();
     return osOK;
 }
