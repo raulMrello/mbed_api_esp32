@@ -23,7 +23,9 @@ static void defaultCallback(){
 
 static void vCallbackFunction(TimerHandle_t arg){
 	Callback<void()>* cback = (Callback<void()> *)pvTimerGetTimerID(arg);
-	cback->call();
+	if(cback){
+		cback->call();
+	}
 }
 
 
