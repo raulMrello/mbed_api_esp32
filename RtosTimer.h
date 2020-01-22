@@ -13,6 +13,7 @@
 
 #include "mbed_api.h"
 
+
 /** The RtosTimer class allow creating and and controlling of timer functions in the system.
  A timer function is called when a time period expires whereby both on-shot and
  periodic timers are possible. A timer can be started, restarted, or stopped.
@@ -95,6 +96,12 @@ public:
     osStatus start(uint32_t millisec);
 
     ~RtosTimer();
+
+    void doCallback(){
+    	if(_function){
+    		_function.call();
+    	}
+    }
 
 protected:
     osTimerId 			_id;		/// Identificador del timer

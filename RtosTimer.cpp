@@ -7,7 +7,7 @@
  */
 
 #include "RtosTimer.h"
-
+#include "Mutex.h"
 
 //------------------------------------------------------------------------------------
 //--- PRIVATE TYPES ------------------------------------------------------------------
@@ -15,17 +15,19 @@
 
 static const char* _MODULE_ = "[RtosTimer].....";
 #define _EXPR_	(_defdbg && !IS_ISR())
-
+static Mutex _mtx;
 
 
 static void defaultCallback(){
 }
 
 static void vCallbackFunction(TimerHandle_t arg){
-	Callback<void()>* cback = (Callback<void()> *)pvTimerGetTimerID(arg);
-	if(cback){
-		cback->call();
+	_mtx.lock();
+	RtosTimer* tmr = (RtosTimer*)pvTimerGetTimerID(arg);
+	if(tmr){
+		tmr->doCallback();
 	}
+	_mtx.unlock();
 }
 
 
@@ -47,7 +49,7 @@ RtosTimer::RtosTimer(Callback<void()> func, os_timer_type type, const char* name
 osStatus RtosTimer::start(uint32_t millisec) {
 	if(_id==0){
 		DEBUG_TRACE_D(_EXPR_, _MODULE_, "Creando xTimerCreate para RtosTimer <%s>", _name);
-		if((_id = xTimerCreate(_name, MBED_MILLIS_TO_TICK(millisec), _type, (void*)&_function, vCallbackFunction)) == 0){
+		if((_id = xTimerCreate(_name, MBED_MILLIS_TO_TICK(millisec), _type, (void*)this, vCallbackFunction)) == 0){
 			DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR xTimerCreate en RtosTimer <%s>", _name);
 			return osError;
 		}
@@ -103,8 +105,10 @@ osStatus RtosTimer::stop(void) {
 
 //------------------------------------------------------------------------------------
 RtosTimer::~RtosTimer() {
+	_mtx.lock();
+	_function = callback(defaultCallback);
 	xTimerDelete(_id, 0);
 	_id = 0;
-	_function = callback(defaultCallback);
+	_mtx.unlock();
 }
 
