@@ -13,7 +13,7 @@
 
 
 //------------------------------------------------------------------------------------
-//--- LIBRERÍAS ESTÁNDAR -------------------------------------------------------------
+//--- LIBRERï¿½AS ESTï¿½NDAR -------------------------------------------------------------
 //------------------------------------------------------------------------------------
 
 #include <math.h>
@@ -28,7 +28,7 @@
 
 
 //------------------------------------------------------------------------------------
-//--- LIBRERÍAS ESP32 ESP-IDF SDK ----------------------------------------------------
+//--- LIBRERï¿½AS ESP32 ESP-IDF SDK ----------------------------------------------------
 //------------------------------------------------------------------------------------
 
 /// ESP32 dependencies
@@ -59,17 +59,9 @@
 #include <nvs.h>
 #include "esp_task_wdt.h"
 
-//------------------------------------------------------------------------------------
-//--- LIBRERÍAS ESP32 ESP-MDF SDK ----------------------------------------------------
-//------------------------------------------------------------------------------------
-
-#include <mdf_common.h>
-#include <mwifi.h>
-#include <mupgrade.h>
-
 
 //------------------------------------------------------------------------------------
-//--- LIBRERÍAS FREERTOS -------------------------------------------------------------
+//--- LIBRERï¿½AS FREERTOS -------------------------------------------------------------
 //------------------------------------------------------------------------------------
 
 
@@ -88,8 +80,8 @@
 //--- MISC ---------------------------------------------------------------------------
 //------------------------------------------------------------------------------------
 
-/** Tipo definido para utilizar PinNames como uint32_t y evitar errores en la serialización cuando
- *  sizeof(PinName) es diferente según el compilador y/o la plataforma */
+/** Tipo definido para utilizar PinNames como uint32_t y evitar errores en la serializaciï¿½n cuando
+ *  sizeof(PinName) es diferente segï¿½n el compilador y/o la plataforma */
 typedef uint32_t PinName32;
 
 
@@ -109,7 +101,7 @@ typedef enum {
   osStatusReserved          = 0x7FFFFFFF  ///< Prevents enum down-size compiler optimization.
 } osStatus_t;
 
-/// Tipos de configuración de los pines gpio
+/// Tipos de configuraciï¿½n de los pines gpio
 typedef enum {
     PullNone          = 0,
     PullUp            = 1,
@@ -169,17 +161,17 @@ typedef struct {
 
 
 //------------------------------------------------------------------------------------
-//--- ADAPTACIÓN MBED-OS -> FREERTOS -------------------------------------------------
+//--- ADAPTACIï¿½N MBED-OS -> FREERTOS -------------------------------------------------
 //------------------------------------------------------------------------------------
 
 
-typedef TaskHandle_t osThreadId;			/// Conversión threadId de mbed-os a freertos
-typedef UBaseType_t	osPriority;				/// Conversión de priority de mbed-os a freertos
+typedef TaskHandle_t osThreadId;			/// Conversiï¿½n threadId de mbed-os a freertos
+typedef UBaseType_t	osPriority;				/// Conversiï¿½n de priority de mbed-os a freertos
 typedef osPriority osPriority_t;
-typedef TimerHandle_t osTimerId;			/// Conversión timerId de mbed-os a freertos
-typedef UBaseType_t os_timer_type;			/// Conversión timer_type de mbed-os a freertos
-typedef EventGroupHandle_t osEventFlagsId;	/// Conversión eventflagid de mbed-os a freertos
-typedef SemaphoreHandle_t osSemaphoreId;	/// Conversión semaphoreid de mbed-os a freertos
+typedef TimerHandle_t osTimerId;			/// Conversiï¿½n timerId de mbed-os a freertos
+typedef UBaseType_t os_timer_type;			/// Conversiï¿½n timer_type de mbed-os a freertos
+typedef EventGroupHandle_t osEventFlagsId;	/// Conversiï¿½n eventflagid de mbed-os a freertos
+typedef SemaphoreHandle_t osSemaphoreId;	/// Conversiï¿½n semaphoreid de mbed-os a freertos
 
 #define osFlagsError				0x80000000U
 #define osFlagsWaitAny				0x00000000U
@@ -219,19 +211,19 @@ void wait_us(int us);
 
 
 //------------------------------------------------------------------------------------
-//--- LIBRERÍAS MBED-OS  -------------------------------------------------------------
+//--- LIBRERï¿½AS MBED-OS  -------------------------------------------------------------
 //------------------------------------------------------------------------------------
 
-#include "Callback.h"		/// Cabecera para la implementación de callbacks
+#include "Callback.h"		/// Cabecera para la implementaciï¿½n de callbacks
 
 
 //------------------------------------------------------------------------------------
-//--- UTILIDADES DE DEPURACIÓN/LOGGING -----------------------------------------------
+//--- UTILIDADES DE DEPURACIï¿½N/LOGGING -----------------------------------------------
 //------------------------------------------------------------------------------------
 
 #define DEBUG_SET_LEVEL(level)	esp_log_level_set("*", level);        // set all components to level
 
-/** Macro para imprimir trazas de depuración via Syslog. Requiere definir 'mbed_syslog' */
+/** Macro para imprimir trazas de depuraciï¿½n via Syslog. Requiere definir 'mbed_syslog' */
 extern void (*syslog_print)(const char* level, const char* tag, const char* format, ...);
 
 /** Macro para trazas ERROR */
@@ -312,11 +304,11 @@ if(expr){												\
 
 
 //------------------------------------------------------------------------------------
-//--- UTILIDADES DE PROPÓSITO GENERAL ------------------------------------------------
+//--- UTILIDADES DE PROPï¿½SITO GENERAL ------------------------------------------------
 //------------------------------------------------------------------------------------
 
 
-/** Utilidad para conocer el tamaño en número de elementos de cualquier tipo de array */
+/** Utilidad para conocer el tamaï¿½o en nï¿½mero de elementos de cualquier tipo de array */
 template <typename T, size_t N> inline size_t SizeOfArray(const T(&)[N]) { return N; }
 
 
