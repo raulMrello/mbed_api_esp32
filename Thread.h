@@ -144,8 +144,16 @@ public:
     	return terminate();
     }
 
+    /**
+     * Activa nivel de depuración
+     * @param level Nivel de depuración
+     */
+    static void setDebugLevel(esp_log_level_t level);
+
 
 protected:
+    unsigned char* _stack_mem;
+    StaticTask_t* _xTaskBuffer;
 
     Callback<void()>  	_task;			/// Función a ejecutar para iniciar la tarea
     const char* 		_name;			/// Nombre

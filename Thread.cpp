@@ -8,6 +8,8 @@
 
 #include "Thread.h"
 
+static const char* _MODULE_ = "[Thread]........";
+#define _EXPR_	(!IS_ISR())
 
 //------------------------------------------------------------------------------------
 //--- PRIVATE TYPES ------------------------------------------------------------------
@@ -20,6 +22,18 @@ static void TaskMain(void* arg){
 }
 
 
+static uint32_t s_allocated_thread_memory = 0;
+static uint32_t s_user_thread_count = 0;
+
+//------------------------------------------------------------------------------------
+//--- STATIC TYPES ------------------------------------------------------------------
+//------------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------------
+void Thread::setDebugLevel(esp_log_level_t level){
+	esp_log_level_set(_MODULE_, level);
+}
 
 //------------------------------------------------------------------------------------
 //-- PUBLIC METHODS IMPLEMENTATION ---------------------------------------------------
@@ -31,6 +45,17 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     _tid = 0;
     _priority = priority;
     _stack_size = stack_size;
+    _stack_mem = stack_mem;
+    if(_stack_mem == NULL){
+    	_stack_mem = pvPortMallocStackMem(stack_size);
+    	MBED_ASSERT(_stack_mem);
+    	s_allocated_thread_memory += stack_size;
+    	_xTaskBuffer = pvPortMallocTcbMem(sizeof(StaticTask_t));
+    	MBED_ASSERT(_xTaskBuffer);
+    	s_allocated_thread_memory += sizeof(StaticTask_t);
+    }
+    s_user_thread_count++;
+    DEBUG_TRACE_I(_EXPR_,_MODULE_, "Thread %s con %d stack. Threads=%d, MAX_HEAP=%d", _name, stack_size, s_user_thread_count, s_allocated_thread_memory);
 }
 
 
@@ -44,7 +69,8 @@ osStatus Thread::start(Callback<void()> task) {
     }
 
     _task = task;
-    xTaskCreate(TaskMain, _name, _stack_size, (void*)&_task, _priority, &_tid);
+    //xTaskCreate(TaskMain, _name, _stack_size, (void*)&_task, _priority, &_tid);
+    _tid = xTaskCreateStatic(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer);
     if(!_tid){
     	_mutex.unlock();
         return osErrorResource;
@@ -145,7 +171,6 @@ Thread::~Thread() {
     // terminate is thread safe
     terminate();
 }
-
 
 
 
