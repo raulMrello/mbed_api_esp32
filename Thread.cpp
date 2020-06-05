@@ -70,7 +70,7 @@ osStatus Thread::start(Callback<void()> task) {
 
     _task = task;
     //xTaskCreate(TaskMain, _name, _stack_size, (void*)&_task, _priority, &_tid);
-    _tid = xTaskCreateStatic(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer);
+    _tid = xTaskCreateStaticPinnedToCore(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer, tskNO_AFFINITY);
     if(!_tid){
     	_mutex.unlock();
         return osErrorResource;
