@@ -311,6 +311,8 @@ if(expr){												\
 
 /** Utilidad para conocer el tama�o en n�mero de elementos de cualquier tipo de array */
 template <typename T, size_t N> inline size_t SizeOfArray(const T(&)[N]) { return N; }
+template <typename T, size_t N> inline size_t MemSizeOfArray(const T(&)[N]) { return sizeof(T) * N; }
+template <typename T, size_t N, size_t M> inline size_t MemSizeOfArray2(const T(&)[N][M]) { return sizeof(T) * N * M; }
 
 
 using namespace std;
