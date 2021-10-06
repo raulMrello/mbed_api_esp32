@@ -47,7 +47,7 @@ void Ticker_HAL::start(){
 
 	esp_err_t err = ESP_OK;
 
-	// si el timer aún no se ha iniciado...
+	// si el timer aï¿½n no se ha iniciado...
 	if(!_ticker_list){
 
 		MBED_ASSERT(!IS_ISR());
@@ -64,26 +64,26 @@ void Ticker_HAL::start(){
 		config.counter_en = TIMER_PAUSE;
 		config.alarm_en = TIMER_ALARM_EN;
 		config.intr_type = TIMER_INTR_LEVEL;
-		config.auto_reload = false;
+		config.auto_reload = TIMER_AUTORELOAD_DIS;
 		err = timer_init(TimerGroup, TimerIdx, &config);
 		MBED_ASSERT(err == ESP_OK);
 		// Carga el valor inicial
 		err = timer_set_counter_value(TimerGroup, TimerIdx, 0x00000000ULL);
 		MBED_ASSERT(err == ESP_OK);
-		// Carga el valor de comparación
+		// Carga el valor de comparaciï¿½n
 		err = timer_set_alarm_value(TimerGroup, TimerIdx, UINT64_MAX);
 		timer_set_alarm(TimerGroup, TimerIdx, TIMER_ALARM_EN);
 		MBED_ASSERT(err == ESP_OK);
-		// Habilita interrupción
+		// Habilita interrupciï¿½n
 		err = timer_enable_intr(TimerGroup, TimerIdx);
-		// Registra manejador de interrupción
+		// Registra manejador de interrupciï¿½n
 		MBED_ASSERT(err == ESP_OK);
 		err = timer_isr_register(TimerGroup, TimerIdx, tickerAlarmISR, (void*)TimerIdx, 0, NULL);
 		// Arranca el timer
 		err = timer_start(TimerGroup, TimerIdx);
 		MBED_ASSERT(err == ESP_OK);
 
-		// Arranca el hilo de ejecución propio
+		// Arranca el hilo de ejecuciï¿½n propio
 		_offset = 0;
 	}
 }
@@ -107,8 +107,8 @@ void Ticker_HAL::tickerISR(){
 				TIMERG0.int_clr_timers.t1 = 1;
 			}
 
-			// en caso de que no haya asignado ningún ticker, lo pausa y lo pone a 0 y marca una alarma en el infinito
-			// por último lo inicia
+			// en caso de que no haya asignado ningï¿½n ticker, lo pausa y lo pone a 0 y marca una alarma en el infinito
+			// por ï¿½ltimo lo inicia
 			if(!_curr_ticker){
 				_curr_ticker = (TickerData_t*)&no_more_tickdata;
 				// lo pausa
@@ -121,7 +121,7 @@ void Ticker_HAL::tickerISR(){
 				TIMERG0.hw_timer[TimerIdx].alarm_high = (uint32_t) 0xFFFFFFF;
 				TIMERG0.hw_timer[TimerIdx].alarm_low = (uint32_t) 0xFFFFFFF;
 			}
-			// si no hay más tickers, marca alarma en infinito
+			// si no hay mï¿½s tickers, marca alarma en infinito
 			else if(_curr_ticker == (TickerData_t*)&no_more_tickdata){
 				_curr_ticker = (TickerData_t*)&no_more_tickdata;
 				// set alarm_value
@@ -162,7 +162,7 @@ void Ticker_HAL::tickerISR(){
 				TIMERG1.int_clr_timers.t1 = 1;
 			}
 
-			// en caso de que no haya asignado ningún ticker, lo pausa y lo pone a 0 dejando las interrupciones desactivadas
+			// en caso de que no haya asignado ningï¿½n ticker, lo pausa y lo pone a 0 dejando las interrupciones desactivadas
 			if(!_curr_ticker){
 				_curr_ticker = (TickerData_t*)&no_more_tickdata;
 				// lo pausa
@@ -175,7 +175,7 @@ void Ticker_HAL::tickerISR(){
 				TIMERG1.hw_timer[TimerIdx].alarm_high = (uint32_t) 0xFFFFFFF;
 				TIMERG1.hw_timer[TimerIdx].alarm_low = (uint32_t) 0xFFFFFFF;
 			}
-			// si no hay más tickers, marca alarma en infinito
+			// si no hay mï¿½s tickers, marca alarma en infinito
 			else if(_curr_ticker == (TickerData_t*)&no_more_tickdata){
 				_curr_ticker = (TickerData_t*)&no_more_tickdata;
 				// set alarm_value
@@ -292,7 +292,7 @@ void Ticker_HAL::detach(Ticker_HAL::TickerData_t* tickdata){
 
 //------------------------------------------------------------------------------------
 void Ticker_HAL::executeNext(){
-	// busca el más prioritario
+	// busca el mï¿½s prioritario
 	timg_dev_t* tim;
 	switch(TimerGroup){
 		case TIMER_GROUP_0:{
@@ -305,9 +305,9 @@ void Ticker_HAL::executeNext(){
 		}
 	}
 
-	// busca el próximo elemento
+	// busca el prï¿½ximo elemento
 	TickerData_t *tnext = _ticker_list->getFirstItem();
-	// si no hay más elementos
+	// si no hay mï¿½s elementos
 	if(!tnext){
 		_curr_ticker = (TickerData_t *)&no_more_tickdata;
 		// set alarm_value infinite
@@ -317,7 +317,7 @@ void Ticker_HAL::executeNext(){
 	}
 	TickerData_t *tdata = _ticker_list->getNextItem();
 	while(tdata){
-		// chequea si es más prioritario
+		// chequea si es mï¿½s prioritario
 		if(tdata->next_event < tnext->next_event){
 			tnext = tdata;
 		}

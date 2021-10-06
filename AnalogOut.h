@@ -27,10 +27,10 @@ public:
     AnalogOut(PinName pin)  {
     	switch(pin){
     		case GPIO_NUM_25:
-    			_channel = DAC_GPIO25_CHANNEL;
+    			_channel = DAC_CHANNEL_1;
     			break;
     		case GPIO_NUM_26:
-    			_channel = DAC_GPIO26_CHANNEL;
+    			_channel = DAC_CHANNEL_2;
 				break;
 
     		default:
