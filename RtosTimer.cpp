@@ -26,6 +26,8 @@ static void vCallbackFunction(TimerHandle_t arg){
 	RtosTimer* tmr = (RtosTimer*)pvTimerGetTimerID(arg);
 	if(tmr){
 		tmr->doCallback();
+		if(tmr->getType() == osTimerOnce)
+			tmr->stop();
 	}
 	_mtx.unlock();
 }
@@ -42,6 +44,18 @@ RtosTimer::RtosTimer(Callback<void()> func, os_timer_type type, const char* name
 	_id = 0;
     _function = func;
     _type = type;
+}
+
+bool RtosTimer::isRunning(){
+	if(_id != 0)
+	{
+		if( xTimerIsTimerActive( _id ) != pdFALSE ) // or more simply and equivalently "if( xTimerIsTimerActive( xTimer ) )"
+			return true;
+		else
+			return false;
+	}
+	else	
+		return false;
 }
 
 
