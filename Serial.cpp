@@ -57,7 +57,16 @@ Serial::Serial(	PinName tx, PinName rx, int bufsize, int baud, char eof,
 	_cb_rx_ovf = callback(defaultCb);
 
 	_rx_timeout = (10 * 1000000)/baud;
-	_uart_config = {
+	
+	_uart_config.baud_rate = baud;		//!< baud_rate
+	_uart_config.data_bits = bits;		//!< data_bits
+	_uart_config.parity = parity;		//!< parity
+	_uart_config.stop_bits = stop_bits;	//!< stop_bits
+	_uart_config.flow_ctrl = type; 		//!< flow_ctrl
+	_uart_config.rx_flow_ctrl_thresh = 0;			//!< rx_flow_ctrl_thresh
+	_uart_config.use_ref_tick = false;	//!< use_ref_tick
+
+	/*_uart_config = {
 	        baud,		//!< baud_rate
 			bits,		//!< data_bits
 			parity,		//!< parity
@@ -65,7 +74,7 @@ Serial::Serial(	PinName tx, PinName rx, int bufsize, int baud, char eof,
 			type, 		//!< flow_ctrl
 	        0,			//!< rx_flow_ctrl_thresh
 	        false		//!< use_ref_tick
-	    };
+	    };*/
 
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "ajustando params, ");
 	DEBUG_CHECK(uart_param_config(_uart_num, &_uart_config) == ESP_OK);
@@ -74,7 +83,7 @@ Serial::Serial(	PinName tx, PinName rx, int bufsize, int baud, char eof,
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "instalando!");
 
 	if(uart_driver_install(_uart_num, _rx_bufsize, _tx_bufsize, DefaultQueueDepth, &_queue, 0) == ESP_OK){
-		DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando tarea de gestión");
+		DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando tarea de gestiï¿½n");
 		_th.setName("Serial");
 		_th.start(callback(this, &Serial::task));
 	}
@@ -237,7 +246,7 @@ void Serial::task() {
 			switch (evt->type) {
 				case UART_DATA_BREAK: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_data_break!");
-					/* Evento al finalizar un envío */
+					/* Evento al finalizar un envï¿½o */
 					_cb_tx.call();
 					break;
 				}
@@ -282,7 +291,7 @@ void Serial::task() {
 					break;
 				}
 
-				/// Detección de BREAK en recepción (es el fin de trama recibido)
+				/// Detecciï¿½n de BREAK en recepciï¿½n (es el fin de trama recibido)
 				case UART_BREAK: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_break!");
 					if(_en_rx){
@@ -310,7 +319,7 @@ void Serial::task() {
 					break;
 				}
 
-				/// Detección de patrón recibido
+				/// Detecciï¿½n de patrï¿½n recibido
 				case UART_PATTERN_DET: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_pattern_det!");
 					break;
