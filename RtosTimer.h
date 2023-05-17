@@ -63,7 +63,7 @@
 class RtosTimer  {
 public:
 
-	/** Clave para activar la depuración en tiempo de compilación */
+	/** Clave para activar la depuraciï¿½n en tiempo de compilaciï¿½n */
 	static const bool DEBUG = true;
 
     
@@ -103,12 +103,17 @@ public:
     	}
     }
 
+    bool isRunning();
+    
+    os_timer_type getType(){return _type;}
+            
+
 protected:
     osTimerId 			_id;		/// Identificador del timer
     os_timer_type 		_type;		/// Tipo de timer (autoreload, oneshot)
     Callback<void()> 	_function;	/// Callback a invocar
     const char* 		_name;		/// nombre del timer
-    bool 				_defdbg;	/// Flag para activar depuración por defecto <printf>
+    bool 				_defdbg;	/// Flag para activar depuraciï¿½n por defecto <printf>
 };
 
 
