@@ -15,7 +15,7 @@ static const char* _MODULE_ = "[Thread]........";
 //--- PRIVATE TYPES ------------------------------------------------------------------
 //------------------------------------------------------------------------------------
 
-/** Rutina estática para iniciar la callback asociada al thread */
+/** Rutina estï¿½tica para iniciar la callback asociada al thread */
 static void TaskMain(void* arg){
 	Callback<void()>* cback = (Callback<void()> *)arg;
 	cback->call();
@@ -91,6 +91,8 @@ osStatus Thread::terminate() {
     _mutex.lock();
     vTaskDelete(_tid);
     _tid = 0;
+    delete(_stack_mem);
+    delete(_xTaskBuffer);
     _mutex.unlock();
     return osOK;
 }
