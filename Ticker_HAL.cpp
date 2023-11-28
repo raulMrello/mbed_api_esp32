@@ -130,16 +130,8 @@ void Ticker_HAL::tickerISR(){
 			}
 			// en otro caso, procesa evento de ticker a nivel de ISR
 			else{
-				// Se lanza el elemento en curso (primer item)
-				TickerData_t* tickdata = _ticker_list->getFirstItem();
-				if(tickdata){
-					// Se reinserta el ticker activo
-					tickdata->next_event = Ticker_HAL::getRawCounter() + tickdata->timeout;
-					// se arranca el nuevo ticker
-					executeNext();
-					// se invoca a la callback
-					tickdata->func.call();
-				}
+				_curr_ticker->func.call();
+				executeNext();
 			}
 			// set alarm
 			TIMERG0.hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
@@ -184,16 +176,8 @@ void Ticker_HAL::tickerISR(){
 			}
 			// en otro caso, procesa evento de ticker a nivel de ISR
 			else{
-				// Se lanza el elemento en curso (primer item)
-				TickerData_t* tickdata = _ticker_list->getFirstItem();
-				if(tickdata){
-					// Se reinserta el ticker activo
-					tickdata->next_event = Ticker_HAL::getRawCounter() + tickdata->timeout;
-					// se arranca el nuevo ticker
-					executeNext();
-					// se invoca a la callback
-					tickdata->func.call();
-				}
+				_curr_ticker->func.call();
+				executeNext();
 			}
 			// set alarm
 			TIMERG1.hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
