@@ -130,8 +130,10 @@ void Ticker_HAL::tickerISR(){
 			}
 			// en otro caso, procesa evento de ticker a nivel de ISR
 			else{
-				_curr_ticker->func.call();
+				Ticker_HAL::TickerData_t* raise_this = _curr_ticker;
+				_curr_ticker->next_event = Ticker_HAL::getRawCounter() + _curr_ticker->timeout;
 				executeNext();
+				raise_this->func.call();
 			}
 			// set alarm
 			TIMERG0.hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
@@ -176,8 +178,10 @@ void Ticker_HAL::tickerISR(){
 			}
 			// en otro caso, procesa evento de ticker a nivel de ISR
 			else{
-				_curr_ticker->func.call();
+				Ticker_HAL::TickerData_t* raise_this = _curr_ticker;
+				_curr_ticker->next_event = Ticker_HAL::getRawCounter() + _curr_ticker->timeout;
 				executeNext();
+				raise_this->func.call();
 			}
 			// set alarm
 			TIMERG1.hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
