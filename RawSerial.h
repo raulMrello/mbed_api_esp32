@@ -54,7 +54,7 @@ public:
      *  @note
      *    Either tx or rx may be specified as NC if unused
      */
-    RawSerial(PinName tx, PinName rx, int baud, uart_port_t uart_num = UART_NUM_1, osPriority priority=osPriorityNormal, uint32_t stack_size = OS_STACK_SIZE*2);
+    RawSerial(PinName tx, PinName rx, int baud, uart_port_t uart_num = UART_NUM_1, osPriority priority=osPriorityNormal, uint32_t stack_size = OS_STACK_SIZE);
 
     virtual ~RawSerial();
 
