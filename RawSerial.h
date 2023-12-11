@@ -21,7 +21,7 @@ class RawSerial {
 
 public:
 
-	/** Configuración por defecto del componente */
+	/** Configuraciï¿½n por defecto del componente */
     enum Parity {
         None = 0,
         Odd,
@@ -47,14 +47,14 @@ public:
      *  @param tx Transmit pin
      *  @param rx Receive pin
      *  @param baud The baud rate of the serial port (optional, defaults to MBED_CONF_PLATFORM_DEFAULT_SERIAL_BAUD_RATE)
-     *  @param uart_num Incluyo este parámetro para seleccionar la UART
+     *  @param uart_num Incluyo este parï¿½metro para seleccionar la UART
      *  @param priority Prioridad del hilo de contol
-     *  @param stack_size Tamaño del stack del hilo de control
+     *  @param stack_size Tamaï¿½o del stack del hilo de control
      *
      *  @note
      *    Either tx or rx may be specified as NC if unused
      */
-    RawSerial(PinName tx, PinName rx, int baud, uart_port_t uart_num = UART_NUM_1, osPriority priority=osPriorityNormal, uint32_t stack_size = OS_STACK_SIZE);
+    RawSerial(PinName tx, PinName rx, int baud, uart_port_t uart_num = UART_NUM_1, osPriority priority=osPriorityNormal, uint32_t stack_size = OS_STACK_SIZE*2);
 
     virtual ~RawSerial();
 
@@ -107,9 +107,20 @@ public:
      *  @param func A pointer to a void function, or 0 to set as none
      *  @param type Which serial interrupt to attach the member function to (Serial::RxIrq for receive, TxIrq for transmit buffer empty)
      */
+    #if ESP_PLATFORM == 1
+    void attach(Callback<void()> func, IrqType type = RxIrq, bool start = false){
+    	_irq[type] = func;
+        if(start){
+            if(_irq[TxIrq]){
+                _irq[TxIrq].call();
+            }
+        }
+    }
+    #else
     void attach(Callback<void()> func, IrqType type = RxIrq){
     	_irq[type] = func;
     }
+    #endif
 
 
     /** Write a char to the serial port
@@ -144,7 +155,7 @@ public:
      *
      * @returns 0 if the write succeeds, EOF for error
      */
-    int puts(const char *str);
+    int puts(const char *str, uint8_t size);
     int printf(const char *format, ...);
 
 protected:
@@ -169,9 +180,9 @@ protected:
     osPriority _priority;
     uint32_t _stack_size;
 
-    /** Máximo número acumulado de eventos en la tarea asociada a la UART */
+    /** Mï¿½ximo nï¿½mero acumulado de eventos en la tarea asociada a la UART */
     static const uint32_t DefaultQueueDepth = 16;
-    /** Tamaño por defecto de la FIFO de recepción */
+    /** Tamaï¿½o por defecto de la FIFO de recepciï¿½n */
     static const uint32_t DefaultBufferLength = 256;
 
     /** Callbacks */
@@ -190,7 +201,7 @@ protected:
 
 
     /**
-     * Instalación del driver
+     * Instalaciï¿½n del driver
      */
     void _install();
 

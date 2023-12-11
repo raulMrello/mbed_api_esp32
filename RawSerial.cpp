@@ -27,6 +27,7 @@ static const char* _MODULE_ = "[RawSerial].....";
 
 //------------------------------------------------------------------------------------
 RawSerial::RawSerial(PinName tx, PinName rx, int baud, uart_port_t uart_num, osPriority priority, uint32_t stack_size){
+	esp_log_level_set(_MODULE_, ESP_LOG_WARN);
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando RawSerial");
 	_uart_config = {0};
 	_tx = tx;
@@ -53,6 +54,8 @@ RawSerial::~RawSerial() {
 	if(_uart_num >= UART_NUM_MAX){
 		return;
 	}
+	delete(_th);
+	_th = NULL;
 	// desactivo interrupciones tx,rx
     uart_disable_rx_intr(_uart_num);
     uart_disable_tx_intr(_uart_num);
@@ -120,8 +123,9 @@ int RawSerial::readable(){
 	if(_uart_num >= UART_NUM_MAX){
 		return 0;
 	}
-	size_t size = 0;
-	uart_get_buffered_data_len(_uart_num, &size);
+	int size = 0;
+	//uart_get_buffered_data_len(_uart_num, &size);
+	size = _rxsz - _rxcnt;
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "readable = %d", size);
 	return (size > 0)? 1 : 0;
 }
@@ -132,7 +136,7 @@ int RawSerial::writeable(){
 	if(_uart_num >= UART_NUM_MAX){
 		return 0;
 	}
-	return((uart_wait_tx_done(_uart_num, 0) == ESP_OK)? 1 : 0);
+	return((uart_wait_tx_done(_uart_num, MBED_MILLIS_TO_TICK(100)) == ESP_OK)? 1 : 0);
 }
 
 //------------------------------------------------------------------------------------
@@ -148,7 +152,7 @@ int RawSerial::putChar(int c) {
 	else{
 		DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR!");
 	}
-	// si ha sido un envío bloqueante por semáforo, lo libera
+	// si ha sido un envï¿½o bloqueante por semï¿½foro, lo libera
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Notificando trama enviada");
 	if(_irq[TxIrq]){
 		_irq[TxIrq].call();
@@ -158,11 +162,11 @@ int RawSerial::putChar(int c) {
 
 
 //------------------------------------------------------------------------------------
-int RawSerial::puts(const char *str) {
+int RawSerial::puts(const char *str, uint8_t size) {
 	if(!_started){
 		return -1;
 	}
-	int size = strlen(str);
+	//int size = strlen(str);
 	int sent = 0;
 	if((sent = uart_write_bytes(_uart_num, str, size)) != -1){
 		DEBUG_TRACE_D(_EXPR_, _MODULE_, "OK!, pushed into fifo %d bytes", sent);
@@ -170,11 +174,11 @@ int RawSerial::puts(const char *str) {
 	else{
 		DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR!");
 	}
-	// si ha sido un envío bloqueante por semáforo, lo libera
+	// si ha sido un envï¿½o bloqueante por semï¿½foro, lo libera
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Notificando trama enviada");
-	if(_irq[TxIrq]){
+	/*if(_irq[TxIrq]){
 		_irq[TxIrq].call();
-	}
+	}*/
 	return sent;
 }
 
@@ -193,11 +197,11 @@ int RawSerial::printf(const char *format, ...) {
     if (len < STRING_STACK_LIMIT) {
         char temp[STRING_STACK_LIMIT];
         vsprintf(temp, format, arg);
-        puts(temp);
+        puts(temp, strlen(temp));
     } else {
         char *temp = new char[len + 1];
         vsprintf(temp, format, arg);
-        puts(temp);
+        puts(temp, strlen(temp));
         delete[] temp;
     }
     va_end(arg);
@@ -268,7 +272,7 @@ void RawSerial::_task() {
 			switch (evt->type) {
 				case UART_DATA_BREAK: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_data_break!");
-					/* Evento al finalizar un envío */
+					/* Evento al finalizar un envï¿½o */
 					if(_irq[TxIrq]){
 						_irq[TxIrq].call();
 					}
@@ -322,7 +326,7 @@ void RawSerial::_task() {
 					break;
 				}
 
-				/// Detección de BREAK en recepción (es el fin de trama recibido)
+				/// Detecciï¿½n de BREAK en recepciï¿½n (es el fin de trama recibido)
 				case UART_BREAK: {
 					break;
 				}
@@ -347,7 +351,7 @@ void RawSerial::_task() {
 					break;
 				}
 
-				/// Detección de patrón recibido
+				/// Detecciï¿½n de patrï¿½n recibido
 				case UART_PATTERN_DET: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_pattern_det!");
 					break;
