@@ -4,7 +4,7 @@
  *  Created on: Ene 2018
  *      Author: raulMrello
  *
- *	Portabilidad del driver RawSerial en un nuevo módulo denominado Serial compatible con ESP-IDF y la
+ *	Portabilidad del driver RawSerial en un nuevo mï¿½dulo denominado Serial compatible con ESP-IDF y la
  *	funcionalidad UART_EVENTS
  *	NOTAS:
  *		El chip ESP32 dispone de 3 canales UART (UART0, UART1, UART2)
@@ -34,7 +34,7 @@ public:
 	 *  @param tx tx pin
 	 *  @param rx rx pin
 	 *  @param baud The baudrate of the serial port (default = 9600).
-	 *  @param eof Caracter de fín de trama
+	 *  @param eof Caracter de fï¿½n de trama
 	 *  @param uart_num UART
      *  @param debugmode Flag para activar o no el modo depuracion
      *  @param type the flow control type (default=Disabled, RTS, CTS, RTSCTS)
@@ -55,7 +55,7 @@ public:
 
 
     /**
-     * Chequea si el componente está habilitado y listo para su ejecución
+     * Chequea si el componente estï¿½ habilitado y listo para su ejecuciï¿½n
      * @return Estado del componente
      */
     bool ready(){ return _ready;  }
@@ -70,9 +70,9 @@ public:
 
     /** config()
      *  Configura las callbacks
-     *  @param rx_done Callback a invocar tras la recepción completa
+     *  @param rx_done Callback a invocar tras la recepciï¿½n completa
      *  @param rx_timeout Callback a invocar tras un fallo por timeout
-     *  @param rx_ovf Callback a invocar tras un fallo por overflow en el buffer de recepción
+     *  @param rx_ovf Callback a invocar tras un fallo por overflow en el buffer de recepciï¿½n
      *  @param us_timeout Tiempo en us para recibir la trama antes de notificar un error por timeout o por fin de trama
      *  @param eof Caracter de fin de trama (end_of_file)
      */
@@ -80,30 +80,30 @@ public:
 
 
     /** send()
-     *  Prepara para una nueva transimisión gestionada por interrupciones. El final de transmisión
+     *  Prepara para una nueva transimisiï¿½n gestionada por interrupciones. El final de transmisiï¿½n
      *  se notifica invocando la callback
      *  @param data Buffer de datos de origen
-     *  @param size Tamaño del buffer a enviar
-     *  @param cb_data_sent Callback a invocar al finalizar el envío
+     *  @param size Tamaï¿½o del buffer a enviar
+     *  @param cb_data_sent Callback a invocar al finalizar el envï¿½o
      *  @return Indica si la transferencia se ha iniciado (true) o no (false)
      */
     bool send(void* data, uint16_t size, Callback<void()> tx_done = (Callback<void()>)NULL);
 
 
     /** printf()
-     * 	Impresión con formato
-     * @param format Formato y lista de parámetros
+     * 	Impresiï¿½n con formato
+     * @param format Formato y lista de parï¿½metros
      * @return
      */
     int printff(const char *format, ...);
 
 
     /** recv()/read()
-     *  Lee el contenido del buffer de recepción hasta un máximo de maxsize bytes
+     *  Lee el contenido del buffer de recepciï¿½n hasta un mï¿½ximo de maxsize bytes
      *  @param buf Buffer de destino en el que copiar la trama recibida
-     *  @param maxsize Tamaño del buffer de destino
-     *  @param timeout_us Tiempo a esperar en millis hasta que haya datos en el buffer de recepción
-     *  @return Número de bytes copiados
+     *  @param maxsize Tamaï¿½o del buffer de destino
+     *  @param timeout_us Tiempo a esperar en millis hasta que haya datos en el buffer de recepciï¿½n
+     *  @return Nï¿½mero de bytes copiados
      */
     uint16_t gets(void* buf, uint16_t maxsize){
     	return recv(buf, maxsize);
@@ -113,20 +113,20 @@ public:
 
     /** startReceiver()
      *  Habilita el receptor en modo isr-managed y por lo tanto lo deja listo para recibir
-     *  datos en modo interrupción
+     *  datos en modo interrupciï¿½n
      */
     void startReceiver();
 
 
     /** stopReceiver()
      *  Deshabilita el receptor en modo isr-managed y por lo tanto deja de recibir
-     *  datos en modo interrupción
+     *  datos en modo interrupciï¿½n
      */
     void stopReceiver();
 
 
     /** busy()
-     *  Informa si el transmisor está ocupado o no
+     *  Informa si el transmisor estï¿½ ocupado o no
      *  @return True: ocupado, False: listo para enviar
      */
     bool busy(){ return((uart_wait_tx_done(_uart_num, 0) == ESP_OK)? false : true);}
@@ -183,20 +183,20 @@ public:
     }
 
     /** setDebugMode()
-     *  Habilita o Deshabilita el modo de depuración
-     *  @param endis True Habilita el modo depuración, False cancela el modo depuración
+     *  Habilita o Deshabilita el modo de depuraciï¿½n
+     *  @param endis True Habilita el modo depuraciï¿½n, False cancela el modo depuraciï¿½n
      */
     void setDebugMode(bool endis) {_debug = endis; }
 
 
 protected:
 
-    /** Tarea de gestión en Freertos
+    /** Tarea de gestiï¿½n en Freertos
      */
     void task();
 
 
-    /** Máximo número acumulado de eventos en la tarea asociada a la UART */
+    /** Mï¿½ximo nï¿½mero acumulado de eventos en la tarea asociada a la UART */
     static const uint32_t DefaultQueueDepth = 16;
 
     bool _ready;

@@ -4,7 +4,7 @@
  *  Created on: Dic 2017
  *      Author: raulMrello
  *
- *	Módulo para definir la forma en la que la clase Ticker se conectará con el hardware. En este caso la plataforma
+ *	Mï¿½dulo para definir la forma en la que la clase Ticker se conectarï¿½ con el hardware. En este caso la plataforma
  *	ESP-IDF ESP32
  *
  */
@@ -27,19 +27,19 @@
 class Ticker_HAL {
 public:
 
-	/** Clave para activar la depuración en tiempo de compilación */
+	/** Clave para activar la depuraciï¿½n en tiempo de compilaciï¿½n */
 	static const bool DEBUG = true;
 
 	/** Divisor del reloj asociado al timer hardware */
     static const int TimerDivider = 16;
 
     /** Escala del timer acorde al divisor establecido */
-	static const int TimerScale = (TIMER_BASE_CLK / TimerDivider);
+	static const int TimerScale = (APB_CLK_FREQ / TimerDivider);
 
 	/** Grupo del timer utilizado para implementar objetos tipo Ticker */
     static const timer_group_t TimerGroup = TIMER_GROUP_0;
 
-    /** Timer dentro del grupo selecciónado */
+    /** Timer dentro del grupo selecciï¿½nado */
     static const timer_idx_t TimerIdx = TIMER_0;
 
 	/** Estructura de control de tickers
@@ -48,10 +48,10 @@ public:
     	int32_t uuid;				/// Identificador del objeto
 		Callback<void()> func;		/// Callback a invocar en los siguientes eventos
 		uint64_t next_event;		/// Timestamp del siguiente evento en el que se ejecuta
-		uint64_t timeout;			/// Temporización en us
+		uint64_t timeout;			/// Temporizaciï¿½n en us
 	};
 
-    /** Inicia la ejecución del TimerManager
+    /** Inicia la ejecuciï¿½n del TimerManager
      */
     static void start();
 
@@ -68,7 +68,7 @@ public:
 	static uint64_t getTimestamp();
 
 
-    /** Añade un offset al timestamp para sincronizar con relojes externos
+    /** Aï¿½ade un offset al timestamp para sincronizar con relojes externos
      * 	@return Contador actual
      */
 	static void setTimestampOffset(uint64_t offset) {_offset = offset; }
@@ -80,20 +80,20 @@ public:
 	static uint64_t getTimestampOffset() { return _offset; }
 
 
-    /** Instala un Ticker en la lista de objetos en ejecución
+    /** Instala un Ticker en la lista de objetos en ejecuciï¿½n
      * 	@param tickData Objeto a instalar
      * 	@return Objeto instalado o NULL en caso de error
      */
     static TickerData_t* attach(TickerData_t* tickdata);
 
 
-    /** Desinstala un objeto de la lista de ejecución
+    /** Desinstala un objeto de la lista de ejecuciï¿½n
      * 	@param tickData Objeto a desinstalar
      */
     static void detach(TickerData_t* tickdata);
 
 
-    /** Rutina de atención a la interrupción de alarmas
+    /** Rutina de atenciï¿½n a la interrupciï¿½n de alarmas
      */
     static void tickerISR();
 
@@ -103,12 +103,12 @@ protected:
     static TickerData_t *_curr_ticker;						/// Puntero al objeto actual
     static uint64_t _offset;								/// Offset aplicado al timestamp
 
-    /** Rutina de ejecución (Thread) del TimerManager
+    /** Rutina de ejecuciï¿½n (Thread) del TimerManager
      */
     static void task();
 
 
-    /** Obtiene el siguiente ticker a cargar en el timer hardware iniciándolo
+    /** Obtiene el siguiente ticker a cargar en el timer hardware iniciï¿½ndolo
      */
     static void executeNext();
 };

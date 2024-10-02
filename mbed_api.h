@@ -39,11 +39,10 @@
 #include <esp_wifi_types.h>
 #include <esp_netif.h>
 #include <esp_event_loop.h>
-#include "esp_spi_flash.h"
 #include <esp_types.h>
 #include <esp_log.h>
 #include <soc/timer_group_struct.h>
-#include <driver/periph_ctrl.h>
+#include <esp_private/periph_ctrl.h>
 #include <driver/timer.h>
 #include <driver/gpio.h>
 #include <driver/adc.h>

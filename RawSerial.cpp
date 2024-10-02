@@ -58,7 +58,7 @@ RawSerial::~RawSerial() {
     uart_disable_tx_intr(_uart_num);
 
     // libero isr y driver
-    uart_isr_free(_uart_num);
+    //uart_isr_free(_uart_num);
     uart_driver_delete(_uart_num);
 }
 
@@ -84,7 +84,7 @@ void RawSerial::format(int bits, RawSerial::Parity parity, int stop_bits){
 	if(_uart_num >= UART_NUM_MAX){
 		return;
 	}
-	_uart_config.data_bits = bits-UART_DATA_BITS_MAX-1;
+	_uart_config.data_bits = (uart_word_length_t)(bits-UART_DATA_BITS_MAX-1);
 	_uart_config.parity = (parity == None)? UART_PARITY_DISABLE : ((parity==Odd)? UART_PARITY_ODD : UART_PARITY_EVEN);
 	_uart_config.stop_bits = (stop_bits==3)? UART_STOP_BITS_1_5 : ((stop_bits==1)? UART_STOP_BITS_1 : UART_STOP_BITS_2);
 	if(_installed){
@@ -104,8 +104,8 @@ void RawSerial::setFlowCtrl(PinName rts, PinName cts, RawSerial::Flow flow){
 	if(_uart_num >= UART_NUM_MAX){
 		return;
 	}
-	_rts = (rts!=NC)? rts : UART_PIN_NO_CHANGE;
-	_cts = (cts!=NC)? cts : UART_PIN_NO_CHANGE;
+	_rts = (rts!=NC)? rts : (PinName)UART_PIN_NO_CHANGE;
+	_cts = (cts!=NC)? cts : (PinName)UART_PIN_NO_CHANGE;
 	_uart_config.flow_ctrl = (flow==Disabled)? UART_HW_FLOWCTRL_DISABLE : ((flow==RTS)? UART_HW_FLOWCTRL_RTS : ((flow==CTS)? UART_HW_FLOWCTRL_CTS : UART_HW_FLOWCTRL_CTS_RTS));
 	if(_installed){
 		DEBUG_TRACE_D(_EXPR_, _MODULE_, "Actualizando control de flujo rts=%d, cts=%d, flow=%d", (int)rts, (int)cts, (int)flow);
@@ -148,7 +148,7 @@ int RawSerial::putChar(int c) {
 	else{
 		DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR!");
 	}
-	// si ha sido un envío bloqueante por semáforo, lo libera
+	// si ha sido un envï¿½o bloqueante por semï¿½foro, lo libera
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Notificando trama enviada");
 	if(_irq[TxIrq]){
 		_irq[TxIrq].call();
@@ -170,7 +170,7 @@ int RawSerial::puts(const char *str) {
 	else{
 		DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR!");
 	}
-	// si ha sido un envío bloqueante por semáforo, lo libera
+	// si ha sido un envï¿½o bloqueante por semï¿½foro, lo libera
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Notificando trama enviada");
 	if(_irq[TxIrq]){
 		_irq[TxIrq].call();
@@ -260,15 +260,15 @@ void RawSerial::_task() {
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando tarea y cola de mensajes...");
 	_sem.release();
 	for(;;){
-		if (xQueueReceive(_queue, (void * )&event, (portTickType)osWaitForever)){
+		if (xQueueReceive(_queue, (void * )&event, (TickType_t)osWaitForever)){
 			uart_event_t*  evt = &event;
 			MBED_ASSERT(evt);
 			_curr_event = evt->type;
-			DEBUG_TRACE_D(_EXPR_, _MODULE_, "Se ha recibido el evento %x", (uint32_t)evt->type);
+			DEBUG_TRACE_D(_EXPR_, _MODULE_, "Se ha recibido el evento %ld", (uint32_t)evt->type);
 			switch (evt->type) {
 				case UART_DATA_BREAK: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_data_break!");
-					/* Evento al finalizar un envío */
+					/* Evento al finalizar un envï¿½o */
 					if(_irq[TxIrq]){
 						_irq[TxIrq].call();
 					}
@@ -293,6 +293,7 @@ void RawSerial::_task() {
 						}
 						_rxbuf = NULL;
 						_rxsz = 0;
+						buffer = NULL;
 						delete(buffer);
 					}
 					break;
@@ -322,7 +323,7 @@ void RawSerial::_task() {
 					break;
 				}
 
-				/// Detección de BREAK en recepción (es el fin de trama recibido)
+				/// Detecciï¿½n de BREAK en recepciï¿½n (es el fin de trama recibido)
 				case UART_BREAK: {
 					break;
 				}
@@ -347,7 +348,7 @@ void RawSerial::_task() {
 					break;
 				}
 
-				/// Detección de patrón recibido
+				/// Detecciï¿½n de patrï¿½n recibido
 				case UART_PATTERN_DET: {
 					DEBUG_TRACE_D(_EXPR_, _MODULE_, "EVT: uart_pattern_det!");
 					break;

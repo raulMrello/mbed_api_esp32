@@ -72,6 +72,7 @@ SPI::SPI(PinName mosi, PinName miso, PinName sclk, PinName ssel) : _spi() {
 			0,				//!< address_bits
 			0,				//!< dummy_bits
 			0, 				//!< mode
+			SPI_CLK_SRC_DEFAULT,		//!< clock_source
 			0, 				//!< duty_cycle_pos
 			0, 				//!< cs_ena_pretrans
 			0, 				//!< cs_ena_posttrans
@@ -107,7 +108,7 @@ void SPI::format(int bits, int mode) {
 		_devcfg.mode = mode;
 		// activo flag
 		_ffflags |= FormatFlag;
-		// si la configuración está completa, finaliza el registro del driver
+		// si la configuraciï¿½n estï¿½ completa, finaliza el registro del driver
 		if(_ffflags == (FormatFlag | FrequencyFlag)){
 			//Attach the slave to the SPI bus
 			esp_err_t ret=spi_bus_add_device(_spi_num, &_devcfg, &_spi);
@@ -125,7 +126,7 @@ void SPI::frequency(int hz) {
     	_devcfg.clock_speed_hz = hz;
 		// activo flag
 		_ffflags |= FrequencyFlag;
-		// si la configuración está completa, finaliza el registro del driver
+		// si la configuraciï¿½n estï¿½ completa, finaliza el registro del driver
 		if(_ffflags == (FormatFlag | FrequencyFlag)){
 			//Attach the slave to the SPI bus
 			esp_err_t ret=spi_bus_add_device(_spi_num, &_devcfg, &_spi);
@@ -142,11 +143,11 @@ int SPI::write(int value) {
     lock();
     spi_transaction_t t;
     memset(&t, 0, sizeof(t));       		// Zero out the transaction
-    t.length	 = 8;    					// Tamaño en bits
+    t.length	 = 8;    					// Tamaï¿½o en bits
     t.tx_buffer = &value;
     t.rx_buffer = &read;
 
-	//Transmite y espera confirmación de transacción completada
+	//Transmite y espera confirmaciï¿½n de transacciï¿½n completada
     int result = 0;
     if(spi_device_transmit(_spi, &t) == ESP_OK){
     	result = read;
@@ -168,11 +169,11 @@ int SPI::write(const char *tx_buffer, int tx_length, char *rx_buffer, int rx_len
 
 	spi_transaction_t t;
     memset(&t, 0, sizeof(t));       // Zero out the transaction
-	t.length	= max_len * 8;    	// Tamaño en bits
+	t.length	= max_len * 8;    	// Tamaï¿½o en bits
 	t.tx_buffer	= _dma_tx_buf;    	// buffer a enviar, debe ser reservado con: pvPortMallocCaps(size, MALLOC_CAP_DMA)
 	t.rx_buffer = _dma_rx_buf;		// buffer a recibir, deber ser reservado con:pvPortMallocCaps(size, MALLOC_CAP_DMA)
 
-	//Transmite usando DMA! y espera confirmación de transacción completada
+	//Transmite usando DMA! y espera confirmaciï¿½n de transacciï¿½n completada
 	if(_nss){
 		_nss->write(0);
 	}

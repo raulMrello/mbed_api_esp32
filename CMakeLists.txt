@@ -15,4 +15,5 @@ idf_component_register(	SRCS "AnalogIn.cpp"
 							"Ticker.cpp"
 							"Ticker_HAL.cpp"
 							"Timer.cpp"
-						INCLUDE_DIRS ".")
+						INCLUDE_DIRS "."
+						REQUIRES esp_wifi driver nvs_flash app_update MQLib esp_hw_support soc)

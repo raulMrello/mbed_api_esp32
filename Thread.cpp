@@ -47,18 +47,18 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     _stack_size = stack_size;
     _stack_mem = stack_mem;
     if(_stack_mem == NULL){
-    	_stack_mem = pvPortMallocStackMem(stack_size);
+        _stack_mem = (unsigned char*) heap_caps_malloc(_stack_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT); 
     	if(_stack_mem == NULL){
-    		DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %d stack. ERROR STACK_MEM", _name, stack_size);
+    		DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %ld stack. ERROR STACK_MEM", _name, stack_size);
     	}
     	MBED_ASSERT(_stack_mem);
     	s_allocated_thread_memory += stack_size;
-    	_xTaskBuffer = pvPortMallocTcbMem(sizeof(StaticTask_t));
+    	_xTaskBuffer = (StaticTask_t*) heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     	MBED_ASSERT(_xTaskBuffer);
     	s_allocated_thread_memory += sizeof(StaticTask_t);
     }
     s_user_thread_count++;
-    DEBUG_TRACE_I(_EXPR_,_MODULE_, "Thread %s con %d stack. Threads=%d, MAX_HEAP=%d, free_internal=%d", _name, stack_size, s_user_thread_count, s_allocated_thread_memory, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+    DEBUG_TRACE_I(_EXPR_,_MODULE_, "Thread %s con %ld stack. Threads=%ld, MAX_HEAP=%ld, free_internal=%d", _name, stack_size, s_user_thread_count, s_allocated_thread_memory, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 }
 
 

@@ -65,6 +65,7 @@ void Ticker_HAL::start(){
 		config.alarm_en = TIMER_ALARM_EN;
 		config.intr_type = TIMER_INTR_LEVEL;
 		config.auto_reload = TIMER_AUTORELOAD_DIS;
+		config.clk_src = (timer_src_clk_t)0;
 		err = timer_init(TimerGroup, TimerIdx, &config);
 		MBED_ASSERT(err == ESP_OK);
 		// Carga el valor inicial
@@ -93,114 +94,112 @@ void Ticker_HAL::tickerISR(){
 
 	/* Obtiene el estado de la alarma y el valor del contador */
 	uint32_t intr_status;
-	switch(TimerGroup){
-		case TIMER_GROUP_0:{
-			intr_status = TIMERG0.int_st_timers.val;
-			TIMERG0.hw_timer[TimerIdx].update = 1;
-			uint64_t timer_counter_value = ((uint64_t) TIMERG0.hw_timer[TimerIdx].cnt_high) << 32 | TIMERG0.hw_timer[TimerIdx].cnt_low;
+	if(TimerGroup == TIMER_GROUP_0){
+		intr_status = TIMERG0.int_st_timers.val;
+		TIMERG0.hw_timer[TimerIdx].update.val = 1;
+		uint64_t timer_counter_value = ((uint64_t) TIMERG0.hw_timer[TimerIdx].hi.val) << 32 | TIMERG0.hw_timer[TimerIdx].lo.val;
 
-			/* Clear the interrupt and update the alarm time */
-			if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_0) {
-				TIMERG0.int_clr_timers.t0 = 1;
-			}
-			else if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_1) {
-				TIMERG0.int_clr_timers.t1 = 1;
-			}
-
-			// en caso de que no haya asignado ning�n ticker, lo pausa y lo pone a 0 y marca una alarma en el infinito
-			// por �ltimo lo inicia
-			if(!_curr_ticker){
-				_curr_ticker = (TickerData_t*)&no_more_tickdata;
-				// lo pausa
-				TIMERG0.hw_timer[TimerIdx].config.enable = 0;
-				// establece cuenta a 0
-				TIMERG0.hw_timer[TimerIdx].load_high = (uint32_t)0;
-				TIMERG0.hw_timer[TimerIdx].load_low = (uint32_t)0;
-				TIMERG0.hw_timer[TimerIdx].reload = 1;
-				// set alarm_value
-				TIMERG0.hw_timer[TimerIdx].alarm_high = (uint32_t) 0xFFFFFFF;
-				TIMERG0.hw_timer[TimerIdx].alarm_low = (uint32_t) 0xFFFFFFF;
-			}
-			// si no hay m�s tickers, marca alarma en infinito
-			else if(_curr_ticker == (TickerData_t*)&no_more_tickdata){
-				_curr_ticker = (TickerData_t*)&no_more_tickdata;
-				// set alarm_value
-				TIMERG0.hw_timer[TimerIdx].alarm_high = (uint32_t) 0xFFFFFFF;
-				TIMERG0.hw_timer[TimerIdx].alarm_low = (uint32_t) 0xFFFFFFF;
-			}
-			// en otro caso, procesa evento de ticker a nivel de ISR
-			else{
-				// Se lanza el elemento en curso (primer item)
-				TickerData_t* tickdata = _ticker_list->getFirstItem();
-				if(tickdata){
-					// Se reinserta el ticker activo
-					tickdata->next_event = Ticker_HAL::getRawCounter() + tickdata->timeout;
-					// se arranca el nuevo ticker
-					executeNext();
-					// se invoca a la callback
-					tickdata->func.call();
-				}
-			}
-			// set alarm
-			TIMERG0.hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
-			// arranca de nuevo
-			TIMERG0.hw_timer[TimerIdx].config.enable = 1;
-
-			return;
+		/* Clear the interrupt and update the alarm time */
+		if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_0) {
+			TIMERG0.int_clr_timers.t0_int_clr = 1;
+		}
+		else if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_1) {
+			TIMERG0.int_clr_timers.t1_int_clr = 1;
 		}
 
-		case TIMER_GROUP_1:{
-			intr_status = TIMERG1.int_st_timers.val;
-			TIMERG1.hw_timer[TimerIdx].update = 1;
-			uint64_t timer_counter_value = ((uint64_t) TIMERG1.hw_timer[TimerIdx].cnt_high) << 32 | TIMERG1.hw_timer[TimerIdx].cnt_low;
-
-			/* Clear the interrupt and update the alarm time */
-			if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_0) {
-				TIMERG1.int_clr_timers.t0 = 1;
-			}
-			else if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_1) {
-				TIMERG1.int_clr_timers.t1 = 1;
-			}
-
-			// en caso de que no haya asignado ning�n ticker, lo pausa y lo pone a 0 dejando las interrupciones desactivadas
-			if(!_curr_ticker){
-				_curr_ticker = (TickerData_t*)&no_more_tickdata;
-				// lo pausa
-				TIMERG1.hw_timer[TimerIdx].config.enable = 0;
-				// establece cuenta a 0
-				TIMERG1.hw_timer[TimerIdx].load_high = (uint32_t)0;
-				TIMERG1.hw_timer[TimerIdx].load_low = (uint32_t)0;
-				TIMERG1.hw_timer[TimerIdx].reload = 1;
-				// set alarm_value
-				TIMERG1.hw_timer[TimerIdx].alarm_high = (uint32_t) 0xFFFFFFF;
-				TIMERG1.hw_timer[TimerIdx].alarm_low = (uint32_t) 0xFFFFFFF;
-			}
-			// si no hay m�s tickers, marca alarma en infinito
-			else if(_curr_ticker == (TickerData_t*)&no_more_tickdata){
-				_curr_ticker = (TickerData_t*)&no_more_tickdata;
-				// set alarm_value
-				TIMERG1.hw_timer[TimerIdx].alarm_high = (uint32_t) 0xFFFFFFF;
-				TIMERG1.hw_timer[TimerIdx].alarm_low = (uint32_t) 0xFFFFFFF;
-			}
-			// en otro caso, procesa evento de ticker a nivel de ISR
-			else{
-				// Se lanza el elemento en curso (primer item)
-				TickerData_t* tickdata = _ticker_list->getFirstItem();
-				if(tickdata){
-					// Se reinserta el ticker activo
-					tickdata->next_event = Ticker_HAL::getRawCounter() + tickdata->timeout;
-					// se arranca el nuevo ticker
-					executeNext();
-					// se invoca a la callback
-					tickdata->func.call();
-				}
-			}
-			// set alarm
-			TIMERG1.hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
-			// arranca de nuevo
-			TIMERG1.hw_timer[TimerIdx].config.enable = 1;
-			return;
+		// en caso de que no haya asignado ning�n ticker, lo pausa y lo pone a 0 y marca una alarma en el infinito
+		// por �ltimo lo inicia
+		if(!_curr_ticker){
+			_curr_ticker = (TickerData_t*)&no_more_tickdata;
+			// lo pausa
+			TIMERG0.hw_timer[TimerIdx].config.tx_en = 0;
+			// establece cuenta a 0
+			TIMERG0.hw_timer[TimerIdx].loadhi.val = (uint32_t)0;
+			TIMERG0.hw_timer[TimerIdx].loadlo.val = (uint32_t)0;
+			TIMERG0.hw_timer[TimerIdx].load.val = 1;
+			// set alarm_value
+			TIMERG0.hw_timer[TimerIdx].alarmhi.val = (uint32_t) 0xFFFFFFF;
+			TIMERG0.hw_timer[TimerIdx].alarmlo.val = (uint32_t) 0xFFFFFFF;
 		}
+		// si no hay m�s tickers, marca alarma en infinito
+		else if(_curr_ticker == (TickerData_t*)&no_more_tickdata){
+			_curr_ticker = (TickerData_t*)&no_more_tickdata;
+			// set alarm_value
+			TIMERG0.hw_timer[TimerIdx].alarmhi.val = (uint32_t) 0xFFFFFFF;
+			TIMERG0.hw_timer[TimerIdx].alarmlo.val = (uint32_t) 0xFFFFFFF;
+		}
+		// en otro caso, procesa evento de ticker a nivel de ISR
+		else{
+			// Se lanza el elemento en curso (primer item)
+			TickerData_t* tickdata = _ticker_list->getFirstItem();
+			if(tickdata){
+				// Se reinserta el ticker activo
+				tickdata->next_event = Ticker_HAL::getRawCounter() + tickdata->timeout;
+				// se arranca el nuevo ticker
+				executeNext();
+				// se invoca a la callback
+				tickdata->func.call();
+			}
+		}
+		// set alarm
+		TIMERG0.hw_timer[TimerIdx].config.tx_alarm_en = TIMER_ALARM_EN;
+		// arranca de nuevo
+		TIMERG0.hw_timer[TimerIdx].config.tx_en = 1;
+
+		return;
+	}
+
+	else if(TimerGroup == TIMER_GROUP_1){
+		intr_status = TIMERG1.int_st_timers.val;
+		TIMERG1.hw_timer[TimerIdx].update.tx_update = 1;
+		uint64_t timer_counter_value = ((uint64_t) TIMERG1.hw_timer[TimerIdx].hi.val) << 32 | TIMERG1.hw_timer[TimerIdx].lo.val;
+
+		/* Clear the interrupt and update the alarm time */
+		if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_0) {
+			TIMERG1.int_clr_timers.t0_int_clr = 1;
+		}
+		else if ((intr_status & BIT(TimerIdx)) && TimerIdx == TIMER_1) {
+			TIMERG1.int_clr_timers.t1_int_clr = 1;
+		}
+
+		// en caso de que no haya asignado ning�n ticker, lo pausa y lo pone a 0 dejando las interrupciones desactivadas
+		if(!_curr_ticker){
+			_curr_ticker = (TickerData_t*)&no_more_tickdata;
+			// lo pausa
+			TIMERG1.hw_timer[TimerIdx].config.tx_en = 0;
+			// establece cuenta a 0
+			TIMERG1.hw_timer[TimerIdx].loadhi.val = (uint32_t)0;
+			TIMERG1.hw_timer[TimerIdx].loadlo.val = (uint32_t)0;
+			TIMERG1.hw_timer[TimerIdx].load.val = 1;
+			// set alarm_value
+			TIMERG1.hw_timer[TimerIdx].alarmhi.val = (uint32_t) 0xFFFFFFF;
+			TIMERG1.hw_timer[TimerIdx].alarmlo.val = (uint32_t) 0xFFFFFFF;
+		}
+		// si no hay m�s tickers, marca alarma en infinito
+		else if(_curr_ticker == (TickerData_t*)&no_more_tickdata){
+			_curr_ticker = (TickerData_t*)&no_more_tickdata;
+			// set alarm_value
+			TIMERG1.hw_timer[TimerIdx].alarmhi.val = (uint32_t) 0xFFFFFFF;
+			TIMERG1.hw_timer[TimerIdx].alarmlo.val = (uint32_t) 0xFFFFFFF;
+		}
+		// en otro caso, procesa evento de ticker a nivel de ISR
+		else{
+			// Se lanza el elemento en curso (primer item)
+			TickerData_t* tickdata = _ticker_list->getFirstItem();
+			if(tickdata){
+				// Se reinserta el ticker activo
+				tickdata->next_event = Ticker_HAL::getRawCounter() + tickdata->timeout;
+				// se arranca el nuevo ticker
+				executeNext();
+				// se invoca a la callback
+				tickdata->func.call();
+			}
+		}
+		// set alarm
+		TIMERG1.hw_timer[TimerIdx].config.tx_alarm_en = TIMER_ALARM_EN;
+		// arranca de nuevo
+		TIMERG1.hw_timer[TimerIdx].config.tx_en = 1;
+		return;
 	}
 }
 
@@ -227,26 +226,22 @@ uint64_t Ticker_HAL::getTimestamp(){
 //------------------------------------------------------------------------------------
 Ticker_HAL::TickerData_t* Ticker_HAL::attach(Ticker_HAL::TickerData_t* tickdata){
 	timg_dev_t* tim;
-	switch(TimerGroup){
-		case TIMER_GROUP_0:{
-			tim = &TIMERG0;
-			break;
-		}
-		case TIMER_GROUP_1:{
-			tim = &TIMERG1;
-			break;
-		}
+	if(TimerGroup == TIMER_GROUP_0){
+		tim = &TIMERG0;
 	}
-
+	else if(TimerGroup == TIMER_GROUP_1){
+		tim = &TIMERG1;
+	}
+	
 	// desactiva la alarma
 	if(!IS_ISR()){
-		tim->hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_DIS;
+		tim->hw_timer[TimerIdx].config.tx_alarm_en = TIMER_ALARM_DIS;
 	}
 	_ticker_list->addItem(tickdata);
 	executeNext();
 	// set alarm
 	if(!IS_ISR()){
-		tim->hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
+		tim->hw_timer[TimerIdx].config.tx_alarm_en = TIMER_ALARM_EN;
 	}
 	return tickdata;
 }
@@ -261,25 +256,21 @@ void Ticker_HAL::detach(Ticker_HAL::TickerData_t* tickdata){
 	}
 
 	timg_dev_t* tim;
-	switch(TimerGroup){
-		case TIMER_GROUP_0:{
-			tim = &TIMERG0;
-			break;
-		}
-		case TIMER_GROUP_1:{
-			tim = &TIMERG1;
-			break;
-		}
+	if(TimerGroup == TIMER_GROUP_0){
+		tim = &TIMERG0;
+	}
+	else if(TimerGroup == TIMER_GROUP_1){
+		tim = &TIMERG1;
 	}
 	// desactiva la alarma
 	if(!IS_ISR()){
-		tim->hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_DIS;
+		tim->hw_timer[TimerIdx].config.tx_alarm_en = TIMER_ALARM_DIS;
 	}
 	_ticker_list->removeItem(tickdata);
 	executeNext();
 	// set alarm
 	if(!IS_ISR()){
-		tim->hw_timer[TimerIdx].config.alarm_en = TIMER_ALARM_EN;
+		tim->hw_timer[TimerIdx].config.tx_alarm_en = TIMER_ALARM_EN;
 	}
 
 }
@@ -294,25 +285,21 @@ void Ticker_HAL::detach(Ticker_HAL::TickerData_t* tickdata){
 void Ticker_HAL::executeNext(){
 	// busca el m�s prioritario
 	timg_dev_t* tim;
-	switch(TimerGroup){
-		case TIMER_GROUP_0:{
-			tim = &TIMERG0;
-			break;
-		}
-		case TIMER_GROUP_1:{
-			tim = &TIMERG1;
-			break;
-		}
+	if(TimerGroup == TIMER_GROUP_0){
+		tim = &TIMERG0;
 	}
-
+	else if(TimerGroup == TIMER_GROUP_1){
+		tim = &TIMERG1;
+	}
+	
 	// busca el pr�ximo elemento
 	TickerData_t *tnext = _ticker_list->getFirstItem();
 	// si no hay m�s elementos
 	if(!tnext){
 		_curr_ticker = (TickerData_t *)&no_more_tickdata;
 		// set alarm_value infinite
-		tim->hw_timer[TimerIdx].alarm_high = (uint32_t) 0xFFFFFFFF;
-		tim->hw_timer[TimerIdx].alarm_low = (uint32_t) 0xFFFFFFFF;
+		tim->hw_timer[TimerIdx].alarmhi.val = (uint32_t) 0xFFFFFFFF;
+		tim->hw_timer[TimerIdx].alarmlo.val = (uint32_t) 0xFFFFFFFF;
 		return;
 	}
 	TickerData_t *tdata = _ticker_list->getNextItem();
@@ -325,7 +312,7 @@ void Ticker_HAL::executeNext(){
 	}
 	// set alarm_value
 	_curr_ticker = tnext;
-	tim->hw_timer[TimerIdx].alarm_high = (uint32_t) (_curr_ticker->next_event >> 32);
-	tim->hw_timer[TimerIdx].alarm_low = (uint32_t) _curr_ticker->next_event;
+	tim->hw_timer[TimerIdx].alarmhi.val = (uint32_t) (_curr_ticker->next_event >> 32);
+	tim->hw_timer[TimerIdx].alarmlo.val = (uint32_t) _curr_ticker->next_event;
 }
 
