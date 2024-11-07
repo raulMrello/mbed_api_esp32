@@ -49,7 +49,7 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     if(_stack_mem == NULL){
     	_stack_mem = pvPortMallocStackMem(stack_size);
     	if(_stack_mem == NULL){
-    		DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %d stack. ERROR STACK_MEM", _name, stack_size);
+    		DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %d stack. ERROR STACK_MEM Max allocable: %d", _name, stack_size, heap_caps_get_largest_free_block(portStackMemoryCaps));
     	}
     	MBED_ASSERT(_stack_mem);
     	s_allocated_thread_memory += stack_size;
