@@ -7,6 +7,7 @@
  */
 
 #include "I2C.h"
+#include <inttypes.h>
 
 
 
@@ -36,10 +37,10 @@ I2C::I2C(PinName sda, PinName scl, bool debug) : _debug(debug){
 	}
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Creando instancia: ");
 	_i2c_num = pv_obj_count;
-	// Precargo próximo canal
+	// Precargo prï¿½ximo canal
 	pv_obj_count = (pv_obj_count == I2C_NUM_0)? I2C_NUM_1 : I2C_NUM_MAX;
 
-	// Inicializo parámetros por defecto
+	// Inicializo parï¿½metros por defecto
 	_i2c.mode = I2C_MODE_MASTER;
 	_i2c.sda_io_num = sda;
 	_i2c.sda_pullup_en = GPIO_PULLUP_ENABLE;
@@ -57,7 +58,7 @@ I2C::I2C(PinName sda, PinName scl, bool debug) : _debug(debug){
 //------------------------------------------------------------------------------------
 void I2C::frequency(int hz) {
     lock();
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Cambiando velocidad a %dHz: ", hz);
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Cambiando velocidad a %" PRIu32 "Hz: ", (uint32_t)hz);
     _i2c.master.clk_speed = hz;
     _timeout_ns = 1000000000/hz;
     if(i2c_param_config(_i2c_num, &_i2c) != ESP_OK){
@@ -76,7 +77,7 @@ void I2C::frequency(int hz) {
 // write - Master Transmitter Mode
 int I2C::write(int address, const char* data, int length, bool repeated) {
     lock();
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Escribiendo %d bytes: ", length);
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Escribiendo %" PRId32 " bytes: ", (int32_t)length);
     DEBUG_TRACE_D(_EXPR_, _MODULE_, "creando comando, ");
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     DEBUG_TRACE_D(_EXPR_, _MODULE_, "start|");
@@ -97,7 +98,7 @@ int I2C::write(int address, const char* data, int length, bool repeated) {
 	}
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "(starting...)");
 	esp_err_t ret = i2c_master_cmd_begin(_i2c_num, cmd, MBED_MILLIS_TO_TICK((length*_timeout_ns)/100));
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "result %d, ", ret);
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "result %d, ", (int)ret);
 	i2c_cmd_link_delete(cmd);
     DEBUG_TRACE_D(_EXPR_, _MODULE_, "OK!");
     unlock();
@@ -120,7 +121,7 @@ int I2C::write(int data) {
 //------------------------------------------------------------------------------------
 // read - Master Reciever Mode
 int I2C::read(int address, char* data, int length, bool repeated) {
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Leyendo %d bytes: ", length);
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Leyendo %" PRId32 " bytes: ", (int32_t)length);
     lock();
     DEBUG_TRACE_D(_EXPR_, _MODULE_, "creando comando, ");
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -147,7 +148,7 @@ int I2C::read(int address, char* data, int length, bool repeated) {
 	}
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "(starting...)");
 	esp_err_t ret = i2c_master_cmd_begin(_i2c_num, cmd, MBED_MILLIS_TO_TICK((length*_timeout_ns)/100));
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "result %d, ", ret);
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "result %d, ", (int)ret);
 	i2c_cmd_link_delete(cmd);
     DEBUG_TRACE_D(_EXPR_, _MODULE_, "OK!");
     unlock();

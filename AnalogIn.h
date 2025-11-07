@@ -6,9 +6,9 @@
  *
  *	Portabilidad del driver AnalogIn
  *	NOTAS:
- *		ESP32 dispone de dos ADC dependiendo de la fuente analógica:
- *		ADC1 utiliza entradas del sistema como la tensión Vdd, sensores cap, etc...
- *		ADC2 utiliza pines GPIO, por lo tanto en función de la entrada seleccionada se utilizará uno u otro ADC.
+ *		ESP32 dispone de dos ADC dependiendo de la fuente analï¿½gica:
+ *		ADC1 utiliza entradas del sistema como la tensiï¿½n Vdd, sensores cap, etc...
+ *		ADC2 utiliza pines GPIO, por lo tanto en funciï¿½n de la entrada seleccionada se utilizarï¿½ uno u otro ADC.
  *
  */
 
@@ -145,7 +145,7 @@ public:
 		else{
 			lock();
 			int data = -1;
-			if(adc2_get_raw((adc2_channel_t)_channel, ADC_WIDTH_12Bit, &data) == ESP_OK){
+			if(adc2_get_raw((adc2_channel_t)_channel, ADC_WIDTH_BIT_12, &data) == ESP_OK){
 				unlock();
 				return (unsigned short)data;
 			}

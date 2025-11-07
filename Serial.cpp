@@ -7,6 +7,7 @@
  */
 
 #include "Serial.h"
+#include <inttypes.h>
 
 
 //------------------------------------------------------------------------------------
@@ -64,7 +65,8 @@ Serial::Serial(	PinName tx, PinName rx, int bufsize, int baud, char eof,
 	_uart_config.stop_bits = stop_bits;	//!< stop_bits
 	_uart_config.flow_ctrl = type; 		//!< flow_ctrl
 	_uart_config.rx_flow_ctrl_thresh = 0;			//!< rx_flow_ctrl_thresh
-	_uart_config.use_ref_tick = false;	//!< use_ref_tick
+	//_uart_config.use_ref_tick = false;	//!< use_ref_tick
+	_uart_config.source_clk = UART_SCLK_APB;
 
 	/*_uart_config = {
 	        baud,		//!< baud_rate
@@ -103,7 +105,7 @@ Serial::~Serial() {
     _cb_rx_ovf = NULL;
 
     // libero isr y driver
-    uart_isr_free(_uart_num);
+    //uart_isr_free(_uart_num);
     uart_driver_delete(_uart_num);
 }
 
@@ -141,10 +143,10 @@ bool Serial::send(void* data, uint16_t size, Callback<void()> tx_done){
 	else{
 		_cb_tx = tx_done;
 	}
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Sending %d bytes from buffer... ", size);
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Sending %" PRIu16 " bytes from buffer... ", (uint16_t)size);
 	int sent = 0;
 	if((sent = uart_write_bytes(_uart_num, (const char*)data, size)) != -1){
-		DEBUG_TRACE_D(_EXPR_, _MODULE_, "OK!, pushed into fifo %d bytes", sent);
+		DEBUG_TRACE_D(_EXPR_, _MODULE_, "OK!, pushed into fifo %" PRId32 " bytes", (int32_t)sent);
 		return true;
 	}
 	DEBUG_TRACE_E(_EXPR_, _MODULE_, "ERROR!");
@@ -192,7 +194,7 @@ uint16_t Serial::recv(void* buf, uint16_t maxsize, int32_t timeout_ms){
 		}
 	}while(size==0 && timeout_ms > 0);
 
-	DEBUG_TRACE_D(_EXPR_, _MODULE_, "%d bytes, timeout restante %d ms. ", size, timeout_ms);
+	DEBUG_TRACE_D(_EXPR_, _MODULE_, "%" PRIu32 " bytes, timeout restante %" PRId32 " ms. ", (uint32_t)size, (int32_t)timeout_ms);
 	if(size == 0){
 		DEBUG_TRACE_D(_EXPR_, _MODULE_, "");
 		return 0;
@@ -239,7 +241,7 @@ void Serial::task() {
 	DEBUG_TRACE_D(_EXPR_, _MODULE_, "Iniciando tarea y cola de mensajes...");
 	_ready = true;
 	for(;;){
-		if (xQueueReceive(_queue, (void * )&event, (portTickType)osWaitForever)){
+		if (xQueueReceive(_queue, (void * )&event, (TickType_t)osWaitForever)){
 			uart_event_t*  evt = &event;
 			MBED_ASSERT(evt);
 			_curr_event = evt->type;
@@ -256,7 +258,7 @@ void Serial::task() {
 					if(_en_rx){
 						size_t bytes = 0;
 						uart_get_buffered_data_len(_uart_num, &bytes);
-						DEBUG_TRACE_D(_EXPR_, _MODULE_, "%d bytes", bytes);
+						DEBUG_TRACE_D(_EXPR_, _MODULE_, "%" PRIu32 " bytes", (uint32_t)bytes);
 						_cb_rx.call();
 					}
 					else{

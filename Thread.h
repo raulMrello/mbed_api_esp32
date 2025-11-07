@@ -70,7 +70,7 @@ public:
         WaitingOr,          /**< NOT USED */
         WaitingAnd,         /**< NOT USED */
         WaitingMailbox,     /**< NOT USED (Mail is implemented as MemoryPool and Queue) */
-		Waiting,			/// Añadido por compatibilidad con FreeRTOS
+		Waiting,			/// Aï¿½adido por compatibilidad con FreeRTOS
 
         /* Not in sync with RTX below here */
         Deleted,            /**< The task has been deleted or not started */
@@ -145,8 +145,8 @@ public:
     }
 
     /**
-     * Activa nivel de depuración
-     * @param level Nivel de depuración
+     * Activa nivel de depuraciï¿½n
+     * @param level Nivel de depuraciï¿½n
      */
     static void setDebugLevel(esp_log_level_t level);
 
@@ -155,12 +155,14 @@ protected:
     unsigned char* _stack_mem;
     StaticTask_t* _xTaskBuffer;
 
-    Callback<void()>  	_task;			/// Función a ejecutar para iniciar la tarea
+    Callback<void()>  	_task;			/// Funciï¿½n a ejecutar para iniciar la tarea
     const char* 		_name;			/// Nombre
-    uint32_t 			_stack_size;	/// Tamaño del stack asignado
+    uint32_t 			_stack_size;	/// Tamaï¿½o del stack asignado
     osPriority 			_priority;		/// Prioridad
     osThreadId 			_tid;			/// Identificador
     Mutex       		_mutex;			/// Mutex de acceso exclusivo
+    bool  _stack_is_allocated;
+    bool  _buffer_is_allocated;
 };
 
 
