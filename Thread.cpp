@@ -73,14 +73,42 @@ osStatus Thread::start(Callback<void()> task) {
 
     _task = task;
     //xTaskCreate(TaskMain, _name, _stack_size, (void*)&_task, _priority, &_tid);
-    _tid = xTaskCreateStaticPinnedToCore(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer, tskNO_AFFINITY);
+    _tid = xTaskCreateStaticPinnedToCore(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer, /*tskNO_AFFINITY*/0);
     if(!_tid){
     	_mutex.unlock();
         return osErrorResource;
     }
     _mutex.unlock();
+    // logeamos info del core donde se ha creado el thread
+    int core = (int)xPortGetCoreID();
+    DEBUG_TRACE_I(_EXPR_, _MODULE_,"1Thread %s started on core %d with stack size %d. Threads=%d, MAX_HEAP=%d, free_internal=%d", _name, core, _stack_size, s_user_thread_count, s_allocated_thread_memory, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     return osOK;
 }
+
+//------------------------------------------------------------------------------------
+osStatus Thread::start(Callback<void()> task, BaseType_t core_id) {
+        // Para ESP32, core_id puede ser 0 o 1. Si es tskNO_AFFINITY, se asigna automáticamente.
+        if (core_id != tskNO_AFFINITY && core_id != 0 && core_id != 1) {
+            return osErrorParameter;
+        }
+        _mutex.lock();
+
+        if ((_tid != 0)) {
+            _mutex.unlock();
+            return osErrorParameter;
+        }
+
+        _task = task;
+        _tid = xTaskCreateStaticPinnedToCore(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer, core_id);
+        if(!_tid){
+            _mutex.unlock();
+            return osErrorResource;
+        }
+        _mutex.unlock();
+        int core = (int)xPortGetCoreID();
+        DEBUG_TRACE_I(_EXPR_, _MODULE_,"2Thread %s started on core %d with stack size %d. Threads=%d, MAX_HEAP=%d, free_internal=%d", _name, core, _stack_size, s_user_thread_count, s_allocated_thread_memory, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+        return osOK;
+    }
 
 
 //------------------------------------------------------------------------------------
