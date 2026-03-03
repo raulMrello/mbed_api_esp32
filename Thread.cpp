@@ -8,6 +8,8 @@
 
 #include "Thread.h"
 
+#include "esp_heap_caps.h"
+
 static const char* _MODULE_ = "[Thread]........";
 #define _EXPR_	(!IS_ISR())
 
@@ -46,17 +48,27 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     _priority = priority;
     _stack_size = stack_size;
     _stack_mem = stack_mem;
+    _xTaskBuffer = NULL;
+    _owns_stack_mem = false;
+    _owns_tcb_mem = false;
+
+    // Stack: if not provided by user, allocate using FreeRTOS-capability heap (internal by default)
     if(_stack_mem == NULL){
-    	_stack_mem = pvPortMallocStackMem(stack_size);
-    	if(_stack_mem == NULL){
-    		DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %d stack. ERROR STACK_MEM Max allocable: %d", _name, stack_size, heap_caps_get_largest_free_block(portStackMemoryCaps));
-    	}
-    	MBED_ASSERT(_stack_mem);
-    	s_allocated_thread_memory += stack_size;
-    	_xTaskBuffer = pvPortMallocTcbMem(sizeof(StaticTask_t));
-    	MBED_ASSERT(_xTaskBuffer);
-    	s_allocated_thread_memory += sizeof(StaticTask_t);
+        _stack_mem = (unsigned char*)pvPortMallocStackMem(stack_size);
+        if(_stack_mem == NULL){
+            DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %d stack. ERROR STACK_MEM Max allocable: %d", _name, stack_size, heap_caps_get_largest_free_block(portStackMemoryCaps));
+        }
+        MBED_ASSERT(_stack_mem);
+        _owns_stack_mem = true;
+        s_allocated_thread_memory += stack_size;
     }
+
+    // TCB: must always live in internal RAM (ESP-IDF validates this)
+    _xTaskBuffer = (StaticTask_t*)pvPortMallocTcbMem(sizeof(StaticTask_t));
+    MBED_ASSERT(_xTaskBuffer);
+    _owns_tcb_mem = true;
+    s_allocated_thread_memory += sizeof(StaticTask_t);
+
     s_user_thread_count++;
     DEBUG_TRACE_I(_EXPR_,_MODULE_, "Thread %s con %d stack. Threads=%d, MAX_HEAP=%d, free_internal=%d", _name, stack_size, s_user_thread_count, s_allocated_thread_memory, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 }
@@ -85,16 +97,28 @@ osStatus Thread::start(Callback<void()> task) {
 
 //------------------------------------------------------------------------------------
 osStatus Thread::terminate() {
-	if(!_tid){
-		return osErrorResource;
-	}
+	bool had_task = (_tid != 0);
     _mutex.lock();
-    vTaskDelete(_tid);
-    _tid = 0;
-    delete(_stack_mem);
-    delete(_xTaskBuffer);
+
+    if(_tid){
+        vTaskDelete(_tid);
+        _tid = 0;
+    }
+
+    if(_owns_stack_mem && _stack_mem){
+        heap_caps_free(_stack_mem);
+    }
+    _stack_mem = NULL;
+    _owns_stack_mem = false;
+
+    if(_owns_tcb_mem && _xTaskBuffer){
+        heap_caps_free(_xTaskBuffer);
+    }
+    _xTaskBuffer = NULL;
+    _owns_tcb_mem = false;
+
     _mutex.unlock();
-    return osOK;
+    return had_task ? osOK : osErrorResource;
 }
 
 

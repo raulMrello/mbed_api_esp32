@@ -154,6 +154,8 @@ public:
 protected:
     unsigned char* _stack_mem;
     StaticTask_t* _xTaskBuffer;
+  bool _owns_stack_mem;
+  bool _owns_tcb_mem;
 
     Callback<void()>  	_task;			/// Función a ejecutar para iniciar la tarea
     const char* 		_name;			/// Nombre
