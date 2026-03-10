@@ -79,7 +79,7 @@
 /** Causas de reset en NVS */
 #define RESET_REASON_KEY                    "rst-reason"
 #define RESET_REASON_MAX_LEN                64
-void SaveResetReasonKey(char* reason);
+void SaveResetReasonKey(const char* reason);
 
 
 //------------------------------------------------------------------------------------
