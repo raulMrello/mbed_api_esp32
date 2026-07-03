@@ -18,7 +18,11 @@ static const char* _MODULE_ = "[Thread]........";
 /** Rutina est�tica para iniciar la callback asociada al thread */
 static void TaskMain(void* arg){
 	Callback<void()>* cback = (Callback<void()> *)arg;
+	MBED_ASSERT(cback);
 	cback->call();
+	while(true){
+		Thread::wait(1000);
+	}
 }
 
 
@@ -46,6 +50,7 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     _priority = priority;
     _stack_size = stack_size;
     _stack_mem = stack_mem;
+    _xTaskBuffer = NULL;
     if(_stack_mem == NULL){
     	_stack_mem = pvPortMallocStackMem(stack_size);
     	if(_stack_mem == NULL){
@@ -110,17 +115,21 @@ osStatus Thread::start(Callback<void()> task, BaseType_t core_id) {
         return osOK;
     }
 
-
 //------------------------------------------------------------------------------------
 osStatus Thread::terminate() {
-	if(!_tid){
-		return osErrorResource;
-	}
     _mutex.lock();
-    vTaskDelete(_tid);
-    _tid = 0;
-    delete(_stack_mem);
-    delete(_xTaskBuffer);
+	if(_tid){
+		vTaskDelete(_tid);
+		_tid = 0;
+	}
+	if(_stack_mem){
+		vPortFree(_stack_mem);
+		_stack_mem = NULL;
+	}
+	if(_xTaskBuffer){
+		vPortFree(_xTaskBuffer);
+		_xTaskBuffer = NULL;
+	}
     _mutex.unlock();
     return osOK;
 }
