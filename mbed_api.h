@@ -233,60 +233,59 @@ void wait_us(int us);
 /** Macro para imprimir trazas de depuraci�n via Syslog. Requiere definir 'mbed_syslog' */
 extern void (*syslog_print)(const char* level, const char* tag, const char* format, ...);
 extern bool _busy;
-extern SemaphoreHandle_t _logMutex;
 
 /** Macro para trazas ERROR */
 #define DEBUG_TRACE_E(expr, tag, format, ...)			\
-if(expr){	\
-	xSemaphoreTake(_logMutex,osWaitForever);            \
+if(expr && !_busy){										\
+	_busy = true;										\
 	ESP_LOGE(tag, format, ##__VA_ARGS__);				\
 	if(syslog_print){									\
 		syslog_print("E", tag, format, ##__VA_ARGS__);	\
 	}													\
-	xSemaphoreGive(_logMutex);							\
+	_busy = false;										\
 }
 
 /** Macro para trazas WARNING */
 #define DEBUG_TRACE_W(expr, tag, format, ...)			\
-if(expr){												\
-	xSemaphoreTake(_logMutex,osWaitForever);									\
+if(expr && !_busy){										\
+	_busy = true;										\
 	ESP_LOGW(tag, format, ##__VA_ARGS__);				\
 	if(syslog_print){									\
 		syslog_print("W", tag, format, ##__VA_ARGS__);	\
 	}													\
-	xSemaphoreGive(_logMutex);									\
+	_busy = false;										\
 }
 
 /** Macro para trazas INFO */
 #define DEBUG_TRACE_I(expr, tag, format, ...)			\
-if(expr){												\
-	xSemaphoreTake(_logMutex,osWaitForever);									\
+if(expr && !_busy){										\
+	_busy = true;										\
 	ESP_LOGI(tag, format, ##__VA_ARGS__);				\
 	if(syslog_print){									\
 		syslog_print("I", tag, format, ##__VA_ARGS__);	\
 	}													\
-	xSemaphoreGive(_logMutex);								\
+	_busy = false;										\
 }
 
 /** Macro para trazas DEBUG */
 #define DEBUG_TRACE_D(expr, tag, format, ...)			\
-if(expr){												\
-	xSemaphoreTake(_logMutex,osWaitForever);									\
+if(expr && !_busy){										\
+	_busy = true;										\
 	ESP_LOGD(tag, format, ##__VA_ARGS__);				\
 	if(syslog_print){									\
 		syslog_print("D", tag, format, ##__VA_ARGS__);	\
 	}													\
-	xSemaphoreGive(_logMutex);									\
+	_busy = false;										\
 }
 /** Macro para trazas VERBOSE */
 #define DEBUG_TRACE_V(expr, tag, format, ...)			\
-if(expr){												\
-	xSemaphoreTake(_logMutex,osWaitForever);									\
+if(expr && !_busy){										\
+	_busy = true;										\
 	ESP_LOGV(tag, format, ##__VA_ARGS__);				\
 	if(syslog_print){									\
 		syslog_print("V", tag, format, ##__VA_ARGS__);	\
 	}													\
-	xSemaphoreGive(_logMutex);								\
+	_busy = false;										\
 }
 
 /** Macro para trazas locales ERROR */
