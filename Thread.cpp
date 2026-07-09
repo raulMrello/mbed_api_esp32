@@ -18,7 +18,11 @@ static const char* _MODULE_ = "[Thread]........";
 /** Rutina est�tica para iniciar la callback asociada al thread */
 static void TaskMain(void* arg){
 	Callback<void()>* cback = (Callback<void()> *)arg;
+	MBED_ASSERT(cback);
 	cback->call();
+	while(true){
+		Thread::wait(1000);
+	}
 }
 
 
@@ -46,6 +50,7 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     _priority = priority;
     _stack_size = stack_size;
     _stack_mem = stack_mem;
+    _xTaskBuffer = NULL;
     if(_stack_mem == NULL){
     	_stack_mem = pvPortMallocStackMem(stack_size);
     	if(_stack_mem == NULL){
@@ -73,26 +78,58 @@ osStatus Thread::start(Callback<void()> task) {
 
     _task = task;
     //xTaskCreate(TaskMain, _name, _stack_size, (void*)&_task, _priority, &_tid);
-    _tid = xTaskCreateStaticPinnedToCore(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer, tskNO_AFFINITY);
+    _tid = xTaskCreateStaticPinnedToCore(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer, /*tskNO_AFFINITY*/0);
     if(!_tid){
     	_mutex.unlock();
         return osErrorResource;
     }
     _mutex.unlock();
+    // logeamos info del core donde se ha creado el thread
+    int core = (int)xPortGetCoreID();
+    DEBUG_TRACE_I(_EXPR_, _MODULE_,"1Thread %s started on core %d with stack size %d. Threads=%d, MAX_HEAP=%d, free_internal=%d", _name, core, _stack_size, s_user_thread_count, s_allocated_thread_memory, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     return osOK;
 }
 
+//------------------------------------------------------------------------------------
+osStatus Thread::start(Callback<void()> task, BaseType_t core_id) {
+        // Para ESP32, core_id puede ser 0 o 1. Si es tskNO_AFFINITY, se asigna automáticamente.
+        if (core_id != tskNO_AFFINITY && core_id != 0 && core_id != 1) {
+            return osErrorParameter;
+        }
+        _mutex.lock();
+
+        if ((_tid != 0)) {
+            _mutex.unlock();
+            return osErrorParameter;
+        }
+
+        _task = task;
+        _tid = xTaskCreateStaticPinnedToCore(TaskMain, _name, _stack_size, (void*)&_task, _priority, _stack_mem, _xTaskBuffer, core_id);
+        if(!_tid){
+            _mutex.unlock();
+            return osErrorResource;
+        }
+        _mutex.unlock();
+        int core = (int)xPortGetCoreID();
+        DEBUG_TRACE_I(_EXPR_, _MODULE_,"2Thread %s started on core %d with stack size %d. Threads=%d, MAX_HEAP=%d, free_internal=%d", _name, core, _stack_size, s_user_thread_count, s_allocated_thread_memory, heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
+        return osOK;
+    }
 
 //------------------------------------------------------------------------------------
 osStatus Thread::terminate() {
-	if(!_tid){
-		return osErrorResource;
-	}
     _mutex.lock();
-    vTaskDelete(_tid);
-    _tid = 0;
-    delete(_stack_mem);
-    delete(_xTaskBuffer);
+	if(_tid){
+		vTaskDelete(_tid);
+		_tid = 0;
+	}
+	if(_stack_mem){
+		vPortFree(_stack_mem);
+		_stack_mem = NULL;
+	}
+	if(_xTaskBuffer){
+		vPortFree(_xTaskBuffer);
+		_xTaskBuffer = NULL;
+	}
     _mutex.unlock();
     return osOK;
 }
