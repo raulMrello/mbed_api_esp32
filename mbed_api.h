@@ -79,19 +79,8 @@
 /** Causas de reset en NVS */
 #define RESET_REASON_KEY                    "rst-reason"
 #define RESET_REASON_MAX_LEN                64
-#define RESET_POLICY_KEY                    "rst-policy"
-enum SafeResetPolicy : uint8_t{
-    ResetPolicyCount = 0,
-    ResetPolicyIgnore,
-    ResetPolicyArmOnly,
-    ResetPolicyFactoryResetEligible,
-    ResetPolicyRollbackEligible,
-};
 void SaveResetReasonKey(char* reason);
-void SaveResetPolicyKey(SafeResetPolicy policy);
-void SaveResetContext(const char* reason, SafeResetPolicy policy);
 void firmwareStop(const char* reason);
-void firmwareStop(const char* reason, SafeResetPolicy policy);
 
 
 //------------------------------------------------------------------------------------
