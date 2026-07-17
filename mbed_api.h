@@ -81,6 +81,7 @@
 #define RESET_REASON_MAX_LEN                64
 #define RESET_REASON_HISTORY_DEPTH          5
 void SaveResetReasonKey(const char* reason);
+void firmwareStop(const char* reason);
 
 
 //------------------------------------------------------------------------------------
