@@ -31,17 +31,22 @@
 //------------------------------------------------------------------------------------
 Mutex::Mutex() : _name("noname"){
 	_id = xSemaphoreCreateMutex();
+	MBED_ASSERT(_id);
 }
 
 
 //------------------------------------------------------------------------------------
 Mutex::Mutex(const char *name) : _name(name) {
 	_id = xSemaphoreCreateMutex();
+	MBED_ASSERT(_id);
 }
 
 
 //------------------------------------------------------------------------------------
 osStatus Mutex::lock(uint32_t millisec) {
+	if(_id == NULL){
+		return osErrorOS;
+	}
 	if(IS_ISR()){
 		if(xSemaphoreTakeFromISR(_id, NULL) == pdTRUE){
 			return osOK;
@@ -57,6 +62,9 @@ osStatus Mutex::lock(uint32_t millisec) {
 
 //------------------------------------------------------------------------------------
 osStatus Mutex::unlock() {
+	if(_id == NULL){
+		return osErrorOS;
+	}
 	if(IS_ISR()){
 		if(xSemaphoreGiveFromISR(_id, NULL) == pdTRUE){
 			return osOK;
@@ -72,7 +80,10 @@ osStatus Mutex::unlock() {
 
 //------------------------------------------------------------------------------------
 Mutex::~Mutex() {
-	vSemaphoreDelete(_id);
+	if(_id){
+		vSemaphoreDelete(_id);
+		_id = NULL;
+	}
 }
 
 
