@@ -31,4 +31,8 @@
 #include "PwmOut.h"
 #include "Watchdog.h"
 
+#if ESP_PLATFORM == 1
+void firmwareStop(const char* reason);
+#endif
+
 #endif
