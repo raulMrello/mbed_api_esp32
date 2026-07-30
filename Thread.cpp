@@ -9,6 +9,8 @@
 #include "Thread.h"
 #include <inttypes.h>
 
+#include "esp_heap_caps.h"
+
 static const char* _MODULE_ = "[Thread]........";
 #define _EXPR_	(!IS_ISR())
 
@@ -53,23 +55,27 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     _priority = priority;
     _stack_size = stack_size;
     _stack_mem = stack_mem;
-    _stack_is_allocated = false;
-    _xTaskBuffer = nullptr;
-    _buffer_is_allocated = false;
+    _xTaskBuffer = NULL;
+    _owns_stack_mem = false;
+    _owns_tcb_mem = false;
+
+    // Stack: if not provided by user, allocate using FreeRTOS-capability heap (internal by default)
     if(_stack_mem == NULL){
-    	_stack_mem = (unsigned char*) heap_caps_malloc(_stack_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-    	if(_stack_mem == NULL){
+        _stack_mem = (unsigned char*)heap_caps_malloc(_stack_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+        if(_stack_mem == NULL){
             DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %" PRIu32 " stack. ERROR STACK_MEM Max allocable: %" PRIu32, _name, (uint32_t)stack_size, (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
-    	}
-    	MBED_ASSERT(_stack_mem);
-        _stack_is_allocated = true;
-    	s_allocated_thread_memory += stack_size;
+        }
+        MBED_ASSERT(_stack_mem);
+        _owns_stack_mem = true;
+        s_allocated_thread_memory += stack_size;
     }
-    // Siempre necesitamos StaticTask_t para xTaskCreateStaticPinnedToCore aunque el stack sea externo
-    _xTaskBuffer = (StaticTask_t*) heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+
+    // TCB: must always live in internal RAM (ESP-IDF validates this)
+    _xTaskBuffer = (StaticTask_t*)heap_caps_malloc(sizeof(StaticTask_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     MBED_ASSERT(_xTaskBuffer);
-    _buffer_is_allocated = true;
+    _owns_tcb_mem = true;
     s_allocated_thread_memory += sizeof(StaticTask_t);
+
     s_user_thread_count++;
     DEBUG_TRACE_I(_EXPR_,_MODULE_, "Thread %s con %" PRIu32 " stack. Threads=%" PRIu32 ", MAX_HEAP=%" PRIu32 ", free_internal=%" PRIu32, _name, (uint32_t)stack_size, (uint32_t)s_user_thread_count, (uint32_t)s_allocated_thread_memory, (uint32_t)heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
 }
@@ -98,33 +104,37 @@ osStatus Thread::start(Callback<void()> task) {
 
 //------------------------------------------------------------------------------------
 osStatus Thread::terminate() {
-    if(!_tid){
-        return osErrorResource;
-    }
+	bool had_task = (_tid != 0);
     _mutex.lock();
-    // Si el estado no es deleted la eliminamos
-    eTaskState st = eTaskGetState(_tid);
-    if(st != eDeleted){
-        vTaskDelete(_tid);
-        // Esperar a eDeleted
-        for(int i=0;i<50;i++){
-            st = eTaskGetState(_tid);
-            if(st == eDeleted) break;
-            vTaskDelay(pdMS_TO_TICKS(2));
+
+    if(_tid){
+        eTaskState st = eTaskGetState(_tid);
+        if(st != eDeleted){
+            vTaskDelete(_tid);
+            for(int i=0; i<50; i++){
+                st = eTaskGetState(_tid);
+                if(st == eDeleted) break;
+                vTaskDelay(pdMS_TO_TICKS(2));
+            }
         }
+        _tid = 0;
+        s_user_thread_count--;
     }
-    s_user_thread_count--;
-    _tid = 0;
-    if(_stack_is_allocated && _stack_mem){
+
+    if(_owns_stack_mem && _stack_mem){
         heap_caps_free(_stack_mem);
-        _stack_mem = nullptr;
     }
-    if(_buffer_is_allocated && _xTaskBuffer){
+    _stack_mem = NULL;
+    _owns_stack_mem = false;
+
+    if(_owns_tcb_mem && _xTaskBuffer){
         heap_caps_free(_xTaskBuffer);
-        _xTaskBuffer = nullptr;
     }
+    _xTaskBuffer = NULL;
+    _owns_tcb_mem = false;
+
     _mutex.unlock();
-    return osOK;
+    return had_task ? osOK : osErrorResource;
 }
 
 

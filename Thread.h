@@ -154,6 +154,8 @@ public:
 protected:
     unsigned char* _stack_mem;
     StaticTask_t* _xTaskBuffer;
+    bool _owns_stack_mem;
+    bool _owns_tcb_mem;
 
     Callback<void()>  	_task;			/// Funci�n a ejecutar para iniciar la tarea
     const char* 		_name;			/// Nombre
@@ -161,8 +163,6 @@ protected:
     osPriority 			_priority;		/// Prioridad
     osThreadId 			_tid;			/// Identificador
     Mutex       		_mutex;			/// Mutex de acceso exclusivo
-    bool  _stack_is_allocated;
-    bool  _buffer_is_allocated;
 };
 
 
