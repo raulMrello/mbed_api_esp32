@@ -10,6 +10,7 @@
 #include <inttypes.h>
 
 #include "esp_heap_caps.h"
+#include "sdkconfig.h"
 
 static const char* _MODULE_ = "[Thread]........";
 #define _EXPR_	(!IS_ISR())
@@ -63,7 +64,18 @@ Thread::Thread(osPriority priority, uint32_t stack_size, unsigned char *stack_me
     if(_stack_mem == NULL){
         _stack_mem = (unsigned char*)heap_caps_malloc(_stack_size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
         if(_stack_mem == NULL){
-            DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %" PRIu32 " stack. ERROR STACK_MEM Max allocable: %" PRIu32, _name, (uint32_t)stack_size, (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+            DEBUG_TRACE_W(_EXPR_,_MODULE_, "Thread %s con %" PRIu32 " stack. Sin bloque interno suficiente. Max allocable interno: %" PRIu32, _name, (uint32_t)stack_size, (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT));
+#ifdef CONFIG_FREERTOS_TASK_CREATE_ALLOW_EXT_MEM
+            _stack_mem = (unsigned char*)heap_caps_malloc(_stack_size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+            if(_stack_mem == NULL){
+                DEBUG_TRACE_E(_EXPR_,_MODULE_, "Thread %s con %" PRIu32 " stack. ERROR STACK_MEM PSRAM Max allocable: %" PRIu32, _name, (uint32_t)stack_size, (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+            }
+            else{
+                DEBUG_TRACE_W(_EXPR_,_MODULE_, "Thread %s con %" PRIu32 " stack. Fallback stack en PSRAM: %p", _name, (uint32_t)stack_size, _stack_mem);
+            }
+#else
+            DEBUG_TRACE_E(_EXPR_,_MODULE_, "CONFIG_FREERTOS_TASK_CREATE_ALLOW_EXT_MEM no activo. No se puede usar PSRAM como fallback");
+#endif
         }
         MBED_ASSERT(_stack_mem);
         _owns_stack_mem = true;
